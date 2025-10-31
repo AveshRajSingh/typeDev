@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
+import bcrypt from "bcrypt";
 
-const userSchema = new mongoose.Schema({
+  const userSchema = new mongoose.Schema({
     // user credentials 
     username:{
         type:String,
@@ -8,8 +9,8 @@ const userSchema = new mongoose.Schema({
         index:true,
         trim:true,
         required:true,
-        max:20,
-        min:3,
+        maxlength:20,
+        minlength:3,
     },
     email :{
         type:String,
@@ -17,13 +18,16 @@ const userSchema = new mongoose.Schema({
         index:true,
         trim:true,
         required:true,
+        match:/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/,
     },
     password:{
         type:String,
         required:true,
-        min:6,
-        max:32,
         trim:true,
+    },
+    isEmailVarified:{
+      type:Boolean,
+      default:false
     },
    
     // typing statistics
@@ -67,15 +71,37 @@ const userSchema = new mongoose.Schema({
       type: Number,
       default: 3, // new users get 3 free AI feedbacks
     },
-   refreshToken : {
+    refreshToken : {
     type:String,
     trim:true,
+    default:null,
    }
 
 
-},{timestamps:true});
+  },{timestamps:true});
 
 
 const User = mongoose.model("User", userSchema);
+
+
+userSchema.pre("save",async function(next) {
+  if(!this.isModified(this.password))return next();
+   this.password = bcrypt.hash(this.password,10);
+   next();
+})
+
+userSchema.methods.isPasswordCorrect = async function (password){
+  return await bcrypt.compare(password,this.password);
+}
+
+
+
+
+
+
+
+
+
+
 
 export {User};
