@@ -20,12 +20,6 @@ const transporter = nodemailer.createTransport({
         pass: process.env.EMAIL_PASS,
     },
 });
-// Verify transporter configuration at startup so auth/connection errors appear early
-transporter.verify()
-    .then(() => console.log('✅ Email transporter is ready'))
-    .catch(err => {
-        console.error('❌ Email transporter verification failed. Check EMAIL_HOST/EMAIL_PORT/EMAIL_USER/EMAIL_PASS in your .env and network connectivity.', err);
-    });
 const sendMail = async (to, subject, text) => {
     // Input validation
     if (typeof to !== 'string' || !to.trim()) {
@@ -44,8 +38,6 @@ const sendMail = async (to, subject, text) => {
         subject,
         text,
     };
-
-   
 
     try {
         await transporter.sendMail(mailOptions);
