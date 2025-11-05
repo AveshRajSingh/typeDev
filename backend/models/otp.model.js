@@ -13,9 +13,9 @@ const otpSchema = new mongoose.Schema({
   },
   expiresAt: {
     type: Date,
-    default: Date.now, // function reference, not executed immediately
+    required: true,
   },
-  resendCount: {
+    resendCount: {
     type: Number,
     default: 0,
   },
@@ -46,19 +46,31 @@ otpSchema.methods.isOtpValid = async function (enteredOtp) {
     return { valid: false, reason: "expired" };
   }
 
-  if (this.attempts >= 5) {
+  // First check expiry (already done). Then compare the provided OTP.
+  // Important: do NOT increment attempts before compare to avoid TOCTOU races.
+  // If bcrypt.compare throws, let it propagate so attempts are not changed.
+  const isMatch = await bcrypt.compare(enteredOtp.toString(), this.otp);
+  if (isMatch) {
+    return { valid: true };
+  }
+
+  // OTP is invalid — atomically increment attempts only if attempts < 5.
+  // If the update returns null it means attempts already reached the limit.
+  const updated = await this.constructor.findOneAndUpdate(
+    { _id: this._id, attempts: { $lt: 5 } },
+    { $inc: { attempts: 1 } },
+    { new: true }
+  );
+
+  if (!updated) {
+    // Couldn't increment because attempts already at/above limit
     return { valid: false, reason: "too_many_attempts" };
   }
 
-  this.attempts += 1;
-  await this.save();
+  // Sync in-memory document's attempts for consistency (optional).
+  this.attempts = updated.attempts;
 
-  const isMatch = await bcrypt.compare(enteredOtp.toString(), this.otp);
-  if (!isMatch) {
-    return { valid: false, reason: "invalid_otp" };
-  }
-
-  return { valid: true };
+  return { valid: false, reason: "invalid_otp" };
 };
 
 // ⏰ Auto-delete expired OTPs

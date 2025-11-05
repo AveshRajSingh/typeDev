@@ -1,81 +1,98 @@
 import { User } from "../models/user.model.js";
 import { Otp } from "../models/otp.model.js";
-import { generateRefreshToken } from "../utility/generateToken.utility.js";
+import {
+  generateRefreshToken,
+  generateOtp,
+} from "../utility/generateToken.utility.js";
 import { sendMail } from "../utility/transportar.utility.js";
 const createUser = async (req, res) => {
   try {
     const { email, password, username } = req.body;
-
-    if (!email || !password || !username) {
-      return res
-        .status(400)
-        .json({ message: "Email, Username and Password are required" });
-    }
     const existingUser = await User.findOne({ $or: [{ email }, { username }] });
+    const otpCode = generateOtp();
+
+    let user;
+
     if (existingUser) {
-      return res
-        .status(400)
-        .json({ message: "Email or Username already in use" });
-    }
-    if (email.trim().length === 0) {
-      return res.status(400).json({ message: "Email cannot be empty" });
-    }
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (existingUser.isEmailVerified) {
+        return res.status(400).json({ message: "You can login" });
+      }
 
-    if (!emailRegex.test(email)) {
-      return res.status(400).json({ message: "Invalid email format" });
-    }
-    if (username.length < 3 || username.length > 30) {
-      return res
-        .status(400)
-        .json({ message: "Username must be between 3 and 30 characters" });
-    }
-    if (username.trim().includes(" ")) {
-      return res
-        .status(400)
-        .json({ message: "Username cannot contain spaces" });
-    }
-    if (username.trim().length === 0) {
-      return res.status(400).json({ message: "Username cannot be empty" });
+      existingUser.password = password;
+      existingUser.username = username;
+      existingUser.refreshToken = generateRefreshToken(existingUser);
+      await existingUser.save();
+      user = existingUser;
+    } else {
+      const newUser = await User.create({ email, password, username });
+      newUser.refreshToken = generateRefreshToken(newUser);
+      await newUser.save();
+      user = newUser;
+
+      // send welcome email (non-blocking)
+      sendMail(
+        user.email,
+        "Welcome to TypeDev!",
+        `Hello ${user.username},\n\nThank you for registering at TypeDev!`
+      ).catch(err => console.error("Welcome email failed:", err));
     }
 
-    if (password.length < 6) {
-      return res
-        .status(400)
-        .json({ message: "Password must be at least 6 characters long" });
-    }
-    if (password.trim().length === 0) {
-      return res.status(400).json({ message: "Password cannot be empty" });
-    }
-
-    const newUser = await User.create({ email, password, username });
-    const refToken = await generateRefreshToken(newUser);
-    newUser.refreshToken = refToken;
-    await newUser.save();
-    const userToBeSent = await User.findById(newUser._id).select(
-      "-password -refreshToken"
-    );
-
-   await sendMail(
-      newUser.email,
-      "Welcome to TypeDev!",
-      `Hello ${newUser.username},\n\nThank you for registering at TypeDev! We're excited to have you on board.\n\nBest regards,\nThe TypeDev Team`
-    );
-
-    const otp = new Otp({
-        otp: 
+    // ✅ Create OTP after we have user._id
+    await Otp.create({
+      userId: user._id,
+      otp: otpCode,
+      expiresAt: new Date(Date.now() + 10 * 60 * 1000),
     });
 
+    // ✅ Send OTP email
     await sendMail(
-        newUser.email,
-        "OTP VARIFICATION",
-        `Hello ${newUser.username},\n\nYour OTP for verification is: 123456\n\nBest regards,\nThe TypeDev Team`
+      user.email,
+      "OTP VERIFICATION",
+      `Hello ${user.username},\n\nYour OTP is: ${otpCode}`
     );
 
-    res
-      .status(201)
-      .json({ message: "User created successfully", user: userToBeSent });
+    const userToBeSent = await User.findById(user._id).select("-password -refreshToken");
+    return res.status(existingUser ? 200 : 201).json({
+      message: "OTP sent to your email for verification",
+      user: userToBeSent,
+    });
+  } catch (error) {
+    console.error("createUser error:", error);
+    return res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+
+const verifyOtp = async (req, res) => {
+  try {
+    const { username, otp } = req.body;
+    
+    const user = await User.findOne({ username });
+    const otpRecord = await Otp.findOne({ userId: user._id });
+    if (!otpRecord) {
+      return res
+        .status(400)
+        .json({ message: "OTP not found. Please request a new one." });
+    }
+    const { valid, reason } = await otpRecord.isOtpValid(otp);
+    if (!valid) {
+      if (reason === "expired") {
+        return res
+          .status(400)
+          .json({ message: "OTP has expired. Please request a new one." });
+      } else {
+        return res
+          .status(400)
+          .json({ message: "Invalid OTP. Please try again." });
+      }
+    }
+    user.isEmailVerified = true;
+    await user.save();
+    await Otp.deleteMany({ userId: user._id });
+    res.status(200).json({ message: "Email verified successfully." });
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+
+export { createUser, verifyOtp };

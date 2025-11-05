@@ -18,17 +18,18 @@ import bcrypt from "bcrypt";
         index:true,
         trim:true,
         required:true,
-        match:/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/,
-    },
+        match: [/^\S+@\S+\.\S+$/, 'Please provide a valid email address'],
+    },  
+    
     password:{
         type:String,
         required:true,
         trim:true,
     },
-    isEmailVarified:{
+    isEmailVerified:{
       type:Boolean,
       default:false
-    },
+    },    
    
     // typing statistics
    testsTaken: {
@@ -81,9 +82,8 @@ import bcrypt from "bcrypt";
   },{timestamps:true});
 
 
-const User = mongoose.model("User", userSchema);
-
-
+  
+  
 userSchema.pre("save",async function(next) {
   if(!this.isModified(this.password))return next();
    this.password = bcrypt.hash(this.password,10);
@@ -95,13 +95,6 @@ userSchema.methods.isPasswordCorrect = async function (password){
 }
 
 
-
-
-
-
-
-
-
-
+const User = mongoose.model("User", userSchema);
 
 export {User};
