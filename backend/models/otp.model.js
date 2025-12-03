@@ -38,9 +38,8 @@ otpSchema.pre("save", async function (next) {
   next();
 });
 
-// 🧩 Static method to generate OTP
+// 🧩 Static method to generate 
 
-// ✅ Instance method to validate OTP
 otpSchema.methods.isOtpValid = async function (enteredOtp) {
   if (this.expiresAt < Date.now()) {
     return { valid: false, reason: "expired" };

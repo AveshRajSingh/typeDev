@@ -8,7 +8,7 @@ export const createUserSchema = yup.object({
     .min(3, "Username must be at least 3 characters long")
     .max(30, "Username cannot exceed 30 characters")
     .matches(/^\S*$/, "Username cannot contain spaces"), 
-    email: yup
+  email: yup
     .string()
     .trim()
     .required("Email is required")

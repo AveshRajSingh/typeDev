@@ -73,6 +73,7 @@ const createUser = async (req, res) => {
   }
 };
 
+
 const verifyOtp = async (req, res) => {
   try {
     const { username, otp } = req.body;
@@ -108,11 +109,7 @@ const verifyOtp = async (req, res) => {
   }
 };
 
-// Resend OTP controller
-// - Accepts { username }
-// - Enforces a cooldown and a max resend limit
-// - Updates the existing OTP record atomically (hashing the OTP before update)
-// - If no OTP record exists, creates a new one
+
 const resendOtp = async (req, res) => {
   try {
     const { username } = req.body;
@@ -213,5 +210,13 @@ const resendOtp = async (req, res) => {
     return res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+
+const loginUser = async (req,res) => {
+  try {
+    
+  } catch (error) {
+    
+  }
+}
 
 export { createUser, verifyOtp, resendOtp };
