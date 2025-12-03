@@ -97,6 +97,7 @@ export const themes = {
   }
 }
 
+
 export function ThemeProvider({ children }) {
   const [theme, setTheme] = useState('system')
   const [resolvedTheme, setResolvedTheme] = useState('light')
