@@ -1,14 +1,8 @@
 "use client";
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import { getPara } from "../services/api";
-import { useTimer } from "./hooks/useTimer";
-import { useTypingState } from "./hooks/useTypingState";
-import { useCapsLock } from "./hooks/useCapsLock";
-import StatsBar from "./ui/StatsBar";
-import CapsLockWarning from "./ui/CapsLockWarning";
-import TypingArea from "./ui/TypingArea";
-import LoadingState from "./ui/LoadingState";
-import ErrorState from "./ui/ErrorState";
+import { useTimer, useTypingState, useCapsLock } from "./hooks";
+import { StatsBar, CapsLockWarning, TypingArea, LoadingState, ErrorState } from "./ui";
 
 const TypingParagraph = ({ timer, difficulty, includeSpecialChars, onComplete }) => {
   const [paragraph, setParagraph] = useState([]);
