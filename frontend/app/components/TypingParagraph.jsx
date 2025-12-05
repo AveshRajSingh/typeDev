@@ -2,7 +2,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { getPara } from "../services/api";
 
-const TypingParagraph = ({ timer, difficulty, includeSpecialChars }) => {
+const TypingParagraph = ({ timer, difficulty, includeSpecialChars, onComplete }) => {
   const [paragraph, setParagraph] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -14,6 +14,12 @@ const TypingParagraph = ({ timer, difficulty, includeSpecialChars }) => {
   const textContainerRef = useRef(null);
   const [scrollOffset, setScrollOffset] = useState(0);
   const lastScrollLine = useRef(0);
+  const [timeLeft, setTimeLeft] = useState(timer);
+  const [isTypingStarted, setIsTypingStarted] = useState(false);
+  const timerIntervalRef = useRef(null);
+  const startTimeRef = useRef(null);
+  const correctCharsRef = useRef(0);
+  const wrongCharsRef = useRef(0);
 
   const fetchParagraph = async () => {
     setLoading(true);
@@ -22,8 +28,17 @@ const TypingParagraph = ({ timer, difficulty, includeSpecialChars }) => {
     setTypedText("");
     setCorrectChars(0);
     setWrongChars(0);
+    correctCharsRef.current = 0;
+    wrongCharsRef.current = 0;
     setScrollOffset(0);
     lastScrollLine.current = 0;
+    setTimeLeft(timer);
+    setIsTypingStarted(false);
+    startTimeRef.current = null;
+    if (timerIntervalRef.current) {
+      clearInterval(timerIntervalRef.current);
+      timerIntervalRef.current = null;
+    }
     try {
       const response = await getPara(
         includeSpecialChars,
@@ -51,6 +66,75 @@ const TypingParagraph = ({ timer, difficulty, includeSpecialChars }) => {
     }
   }, [paragraph]);
 
+  // Timer countdown effect
+  useEffect(() => {
+    if (isTypingStarted && timeLeft > 0) {
+      timerIntervalRef.current = setInterval(() => {
+        setTimeLeft((prev) => {
+          if (prev <= 1) {
+            clearInterval(timerIntervalRef.current);
+            // Use setTimeout to ensure state is updated before calling handleTestComplete
+            setTimeout(() => {
+              handleTestComplete();
+            }, 100);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+      return () => {
+        if (timerIntervalRef.current) {
+          clearInterval(timerIntervalRef.current);
+        }
+      };
+    }
+  }, [isTypingStarted]);
+
+  // Effect to trigger completion when timer reaches 0
+  useEffect(() => {
+    if (isTypingStarted && timeLeft === 0) {
+      handleTestComplete();
+    }
+  }, [timeLeft]);
+
+  const handleTestComplete = () => {
+    // Use the full timer duration for calculation
+    const timeElapsed = timer;
+    const minutes = timeElapsed / 60;
+    
+    // Prevent division by zero
+    if (minutes === 0) return;
+    
+    // Use ref values to get the latest counts
+    const finalCorrectChars = correctCharsRef.current;
+    const finalWrongChars = wrongCharsRef.current;
+    
+    // Calculate words (5 characters = 1 word)
+    const correctWords = finalCorrectChars / 5;
+    const totalWords = (finalCorrectChars + finalWrongChars) / 5;
+    
+    // Accurate WPM (only correct characters)
+    const accurateWPM = Math.round(correctWords / minutes);
+    
+    // Raw WPM (all typed characters)
+    const rawWPM = Math.round(totalWords / minutes);
+    
+    // Accuracy percentage
+    const accuracy = Math.round((finalCorrectChars / (finalCorrectChars + finalWrongChars)) * 100) || 0;
+
+    if (onComplete) {
+      onComplete({
+        correctChars: finalCorrectChars,
+        wrongChars: finalWrongChars,
+        accurateWPM: accurateWPM || 0,
+        rawWPM: rawWPM || 0,
+        accuracy,
+        timeElapsed,
+      });
+    }
+  };
+
   const fullText = paragraph.join(" ");
 
   useEffect(() => {
@@ -77,15 +161,29 @@ const TypingParagraph = ({ timer, difficulty, includeSpecialChars }) => {
   const handleKeyPress = (e) => {
     const key = e.key;
 
+    // Start timer on first keypress
+    if (!isTypingStarted && key.length === 1) {
+      setIsTypingStarted(true);
+      startTimeRef.current = Date.now();
+    }
+
     if (key === "Backspace") {
       if (currentIndex > 0) {
         setCurrentIndex(currentIndex - 1);
         setTypedText(typedText.slice(0, -1));
         // Adjust correct/wrong counts
         if (typedText[typedText.length - 1] === fullText[currentIndex - 1]) {
-          setCorrectChars(correctChars - 1);
+          setCorrectChars(prev => {
+            const newVal = prev - 1;
+            correctCharsRef.current = newVal;
+            return newVal;
+          });
         } else {
-          setWrongChars(wrongChars - 1);
+          setWrongChars(prev => {
+            const newVal = prev - 1;
+            wrongCharsRef.current = newVal;
+            return newVal;
+          });
         }
       }
       return;
@@ -96,9 +194,17 @@ const TypingParagraph = ({ timer, difficulty, includeSpecialChars }) => {
       setTypedText(typedText + key);
 
       if (key === expectedChar) {
-        setCorrectChars(correctChars + 1);
+        setCorrectChars(prev => {
+          const newVal = prev + 1;
+          correctCharsRef.current = newVal;
+          return newVal;
+        });
       } else {
-        setWrongChars(wrongChars + 1);
+        setWrongChars(prev => {
+          const newVal = prev + 1;
+          wrongCharsRef.current = newVal;
+          return newVal;
+        });
       }
 
       setCurrentIndex(currentIndex + 1);
@@ -190,13 +296,18 @@ const TypingParagraph = ({ timer, difficulty, includeSpecialChars }) => {
     <div className="max-w-4xl mx-auto mt-8 p-8">
       <div
         className="rounded-xl p-8 shadow-lg transition-all duration-300"
-        style={{
-          backgroundColor: "var(--card)",
-        }}
       >
         {/* Stats Bar */}
         <div className="flex justify-between items-center mb-6 pb-4 border-b" style={{ borderColor: "var(--border)" }}>
           <div className="flex gap-6">
+            <div>
+              <span style={{ color: "var(--secondary)" }} className="text-sm">
+                Time:{" "}
+              </span>
+              <span style={{ color: isTypingStarted ? "var(--primary)" : "var(--foreground)" }} className="font-semibold text-2xl">
+                {timeLeft}s
+              </span>
+            </div>
             <div>
               <span style={{ color: "var(--secondary)" }} className="text-sm">
                 Correct:{" "}

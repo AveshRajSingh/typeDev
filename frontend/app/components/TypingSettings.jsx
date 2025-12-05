@@ -16,9 +16,6 @@ const TypingSettings = ({
     <div className="max-w-4xl mx-auto mt-20 mb-8">
       <div
         className="rounded-xl px-6 py-4 shadow-lg transition-all duration-300 flex items-center justify-center gap-6"
-        style={{
-          backgroundColor: "var(--card)",
-        }}
       >
         {/* Timer Options */}
         <div className="flex items-center gap-2">

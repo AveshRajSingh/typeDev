@@ -7,6 +7,7 @@ import Signup from "./components/auth/Signup";
 import AuthModal from "./components/auth/AuthModal";
 import TypingSettings from "./components/TypingSettings";
 import TypingParagraph from "./components/TypingParagraph";
+import Results from "./components/Results";
 
 export default function Home() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -14,6 +15,8 @@ export default function Home() {
   const [timer, setTimer] = useState(30);
   const [difficulty, setDifficulty] = useState("easy");
   const [includeSpecialChars, setIncludeSpecialChars] = useState(false);
+  const [showResults, setShowResults] = useState(false);
+  const [testResults, setTestResults] = useState(null);
 
   const handleOpenAuth = (view = "login") => {
     setAuthView(view);
@@ -30,6 +33,16 @@ export default function Home() {
 
   const handleSwitchToLogin = () => {
     setAuthView("login");
+  };
+
+  const handleTestComplete = (stats) => {
+    setTestResults(stats);
+    setShowResults(true);
+  };
+
+  const handleRestart = () => {
+    setShowResults(false);
+    setTestResults(null);
   };
 
   return (
@@ -65,22 +78,29 @@ export default function Home() {
         <ThemeSelector />
       </div>
 
-      {/* Typing Settings Component */}
-      <TypingSettings
-        timer={timer}
-        setTimer={setTimer}
-        difficulty={difficulty}
-        setDifficulty={setDifficulty}
-        includeSpecialChars={includeSpecialChars}
-        setIncludeSpecialChars={setIncludeSpecialChars}
-      />
+      {showResults ? (
+        <Results stats={testResults} onRestart={handleRestart} />
+      ) : (
+        <>
+          {/* Typing Settings Component */}
+          <TypingSettings
+            timer={timer}
+            setTimer={setTimer}
+            difficulty={difficulty}
+            setDifficulty={setDifficulty}
+            includeSpecialChars={includeSpecialChars}
+            setIncludeSpecialChars={setIncludeSpecialChars}
+          />
 
-      {/* Typing Paragraph Component */}
-      <TypingParagraph
-        timer={timer}
-        difficulty={difficulty}
-        includeSpecialChars={includeSpecialChars}
-      />
+          {/* Typing Paragraph Component */}
+          <TypingParagraph
+            timer={timer}
+            difficulty={difficulty}
+            includeSpecialChars={includeSpecialChars}
+            onComplete={handleTestComplete}
+          />
+        </>
+      )}
 
       <AuthModal isOpen={isAuthModalOpen} onClose={handleCloseAuth}>
         {authView === "login" ? (
