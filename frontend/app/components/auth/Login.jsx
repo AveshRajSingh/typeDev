@@ -56,9 +56,9 @@ const Login = ({ onSwitchToSignup, onClose }) => {
 
   return (
     <div className="animate-fadeIn">
-      <div className="text-center mb-6">
+      <div className="text-center mb-4">
         <h1
-          className="text-2xl font-bold mb-1"
+          className="text-xl font-bold mb-1"
           style={{ color: "var(--foreground)" }}
         >
           Welcome Back
@@ -68,7 +68,7 @@ const Login = ({ onSwitchToSignup, onClose }) => {
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-3">
         {error && (
           <div
             className="p-3 rounded-lg text-sm"
@@ -109,7 +109,7 @@ const Login = ({ onSwitchToSignup, onClose }) => {
             onChange={handleChange}
             onFocus={() => handleFocus("usernameOrEmail")}
             onBlur={() => handleBlur("usernameOrEmail")}
-            className="w-full px-4 py-3 rounded-lg transition-all duration-200 focus:outline-none"
+            className="w-full px-4 py-2.5 rounded-lg transition-all duration-200 focus:outline-none"
             style={{
               backgroundColor: "var(--input)",
               borderWidth: "2px",
@@ -149,7 +149,7 @@ const Login = ({ onSwitchToSignup, onClose }) => {
             onChange={handleChange}
             onFocus={() => handleFocus("password")}
             onBlur={() => handleBlur("password")}
-            className="w-full px-4 py-3 rounded-lg transition-all duration-200 focus:outline-none"
+            className="w-full px-4 py-2.5 rounded-lg transition-all duration-200 focus:outline-none"
             style={{
               backgroundColor: "var(--input)",
               borderWidth: "2px",
@@ -165,7 +165,7 @@ const Login = ({ onSwitchToSignup, onClose }) => {
         <button
           type="submit"
           disabled={loading}
-          className="w-full py-3 px-4 rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 hover:shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+          className="w-full py-2.5 px-4 rounded-lg font-semibold transition-all duration-200 hover:brightness-90 active:brightness-75 disabled:opacity-50 disabled:cursor-not-allowed"
           style={{
             backgroundColor: "var(--primary)",
             color: "#ffffff",
@@ -175,7 +175,7 @@ const Login = ({ onSwitchToSignup, onClose }) => {
         </button>
       </form>
 
-      <div className="relative my-5">
+      <div className="relative my-4">
         <div
           className="absolute inset-0 flex items-center"
           style={{ borderTop: "1px solid var(--border)" }}

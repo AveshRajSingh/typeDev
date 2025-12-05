@@ -1,38 +1,18 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import ThemeSelector from "./components/ThemeSelector";
-import Login from "./components/auth/Login";
-import Signup from "./components/auth/Signup";
-import AuthModal from "./components/auth/AuthModal";
 import TypingSettings from "./components/TypingSettings";
 import TypingParagraph from "./components/TypingParagraph";
 import Results from "./components/Results";
 
 export default function Home() {
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  const [authView, setAuthView] = useState("login"); // 'login' or 'signup'
+  const router = useRouter();
   const [timer, setTimer] = useState(30);
   const [difficulty, setDifficulty] = useState("easy");
   const [includeSpecialChars, setIncludeSpecialChars] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [testResults, setTestResults] = useState(null);
-
-  const handleOpenAuth = (view = "login") => {
-    setAuthView(view);
-    setIsAuthModalOpen(true);
-  };
-
-  const handleCloseAuth = () => {
-    setIsAuthModalOpen(false);
-  };
-
-  const handleSwitchToSignup = () => {
-    setAuthView("signup");
-  };
-
-  const handleSwitchToLogin = () => {
-    setAuthView("login");
-  };
 
   const handleTestComplete = (stats) => {
     setTestResults(stats);
@@ -54,7 +34,7 @@ export default function Home() {
     >
       <div className="absolute top-4 right-4 flex gap-3 items-center">
         <button
-          onClick={() => handleOpenAuth("login")}
+          onClick={() => router.push('/auth')}
           className="p-2 rounded-full hover:opacity-80 transition-opacity"
           style={{ backgroundColor: "var(--primary)" }}
           aria-label="User account"
@@ -100,14 +80,6 @@ export default function Home() {
           />
         </>
       )}
-
-      <AuthModal isOpen={isAuthModalOpen} onClose={handleCloseAuth}>
-        {authView === "login" ? (
-          <Login onSwitchToSignup={handleSwitchToSignup} />
-        ) : (
-          <Signup onSwitchToLogin={handleSwitchToLogin} />
-        )}
-      </AuthModal>
     </main>
   );
 }
