@@ -20,6 +20,8 @@ const TypingParagraph = ({ timer, difficulty, includeSpecialChars, onComplete })
   const startTimeRef = useRef(null);
   const correctCharsRef = useRef(0);
   const wrongCharsRef = useRef(0);
+  const consecutiveSpaces = useRef(0);
+  const [capsLockOn, setCapsLockOn] = useState(false);
 
   const fetchParagraph = async () => {
     setLoading(true);
@@ -30,6 +32,8 @@ const TypingParagraph = ({ timer, difficulty, includeSpecialChars, onComplete })
     setWrongChars(0);
     correctCharsRef.current = 0;
     wrongCharsRef.current = 0;
+    consecutiveSpaces.current = 0;
+    setCapsLockOn(false);
     setScrollOffset(0);
     lastScrollLine.current = 0;
     setTimeLeft(timer);
@@ -65,6 +69,26 @@ const TypingParagraph = ({ timer, difficulty, includeSpecialChars, onComplete })
       inputRef.current.focus();
     }
   }, [paragraph]);
+
+  // Continuous Caps Lock detection
+  useEffect(() => {
+    const checkCapsLock = (e) => {
+      if (e.getModifierState && e.getModifierState('CapsLock')) {
+        setCapsLockOn(true);
+      } else {
+        setCapsLockOn(false);
+      }
+    };
+
+    // Check on any key event
+    window.addEventListener('keydown', checkCapsLock);
+    window.addEventListener('keyup', checkCapsLock);
+
+    return () => {
+      window.removeEventListener('keydown', checkCapsLock);
+      window.removeEventListener('keyup', checkCapsLock);
+    };
+  }, []);
 
   // Timer countdown effect
   useEffect(() => {
@@ -168,6 +192,10 @@ const TypingParagraph = ({ timer, difficulty, includeSpecialChars, onComplete })
     }
 
     if (key === "Backspace") {
+      // Reset consecutive spaces counter on backspace
+      if (currentIndex > 0 && fullText[currentIndex - 1] === ' ') {
+        consecutiveSpaces.current = Math.max(0, consecutiveSpaces.current - 1);
+      }
       if (currentIndex > 0) {
         setCurrentIndex(currentIndex - 1);
         setTypedText(typedText.slice(0, -1));
@@ -191,6 +219,19 @@ const TypingParagraph = ({ timer, difficulty, includeSpecialChars, onComplete })
 
     if (key.length === 1 && currentIndex < fullText.length) {
       const expectedChar = fullText[currentIndex];
+      
+      // Prevent more than 2 consecutive spaces ONLY if the next expected character is NOT a space
+      if (key === ' ' && expectedChar !== ' ') {
+        if (consecutiveSpaces.current >= 2) {
+          return; // Block the space
+        }
+        consecutiveSpaces.current++;
+      } else if (key !== ' ') {
+        // Reset counter when any non-space key is pressed
+        consecutiveSpaces.current = 0;
+      }
+      // If expectedChar is a space, allow it and don't increment counter
+      
       setTypedText(typedText + key);
 
       if (key === expectedChar) {
@@ -297,6 +338,16 @@ const TypingParagraph = ({ timer, difficulty, includeSpecialChars, onComplete })
       <div
         className="rounded-xl p-8 shadow-lg transition-all duration-300"
       >
+        {/* Caps Lock Warning */}
+        {capsLockOn && (
+          <div className="mb-4 p-3 rounded-lg flex items-center gap-2" style={{ backgroundColor: "#fef3c7", border: "1px solid #fbbf24" }}>
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="#f59e0b">
+              <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+            </svg>
+            <span style={{ color: "#92400e", fontSize: "14px", fontWeight: "500" }}>Caps Lock is ON</span>
+          </div>
+        )}
+
         {/* Stats Bar */}
         <div className="flex justify-between items-center mb-6 pb-4 border-b" style={{ borderColor: "var(--border)" }}>
           <div className="flex gap-6">

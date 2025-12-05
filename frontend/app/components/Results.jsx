@@ -8,9 +8,6 @@ const Results = ({ stats, onRestart }) => {
     <div className="max-w-4xl mx-auto mt-20 p-8">
       <div
         className="rounded-xl p-12 shadow-2xl transition-all duration-300"
-        style={{
-          backgroundColor: "var(--card)",
-        }}
       >
         {/* Title */}
         <h1
@@ -63,7 +60,7 @@ const Results = ({ stats, onRestart }) => {
               Accuracy
             </p>
             <p style={{ color: "#22c55e" }} className="text-5xl font-bold">
-              {accuracy}%
+              {accuracy.toFixed(1)}%
             </p>
           </div>
 
