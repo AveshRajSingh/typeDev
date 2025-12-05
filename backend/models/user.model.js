@@ -48,6 +48,10 @@ import bcrypt from "bcrypt";
       type: Number,
       default: 0,
     },
+    bestAccuracy: {
+      type: Number,
+      default: 0,
+    },
     
 
     // for payment and subscriptions

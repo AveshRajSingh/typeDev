@@ -101,11 +101,23 @@ const resendOtp = async (username) => {
   }
 };
 
+const getUserProfile = async (username) => {
+  try {
+    const response = await api.get(`/users/profile/${username}`);
+    return response.data;
+  } catch (error) {
+    const errorMessage = error.response?.data?.message || "Failed to fetch user profile";
+    console.error("Get user profile error:", errorMessage);
+    throw new Error(errorMessage);
+  }
+};
+
 export { 
   getPara, 
   loginUser, 
   getCurrentUser, 
   signupUser, 
   verifyOtp, 
-  resendOtp 
+  resendOtp,
+  getUserProfile 
 };

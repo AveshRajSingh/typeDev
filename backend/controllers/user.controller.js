@@ -310,4 +310,50 @@ const getCurrentUser = async (req, res) => {
   }
 };
 
-export { createUser, verifyOtp, resendOtp, loginUser, getCurrentUser };
+const getUserProfile = async (req, res) => {
+  try {
+    const { username } = req.params;
+
+    if (!username) {
+      return res.status(400).json({ 
+        message: "Username is required" 
+      });
+    }
+
+    // Find user by username and exclude sensitive information
+    const user = await User.findOne({ username }).select(
+      "-password -refreshToken"
+    );
+
+    if (!user) {
+      return res.status(404).json({ 
+        message: "User not found" 
+      });
+    }
+
+    // Return user profile with statistics
+    return res.status(200).json({
+      message: "Profile fetched successfully",
+      username: user.username,
+      email: user.email,
+      testsTaken: user.testsTaken,
+      avgWPM: user.avgWPM,
+      bestWPM: user.bestWPM,
+      avgAccuracy: user.avgAccuracy,
+      bestAccuracy: user.bestAccuracy || 0,
+      testsCompleted: user.testsTaken, // using testsTaken as completed for now
+      isPremium: user.isPremium,
+      isEmailVerified: user.isEmailVerified,
+      freeFeedbackLeft: user.freeFeedbackLeft,
+      createdAt: user.createdAt,
+    });
+  } catch (error) {
+    console.error("getUserProfile error:", error);
+    return res.status(500).json({ 
+      message: "Server error", 
+      error: error.message 
+    });
+  }
+};
+
+export { createUser, verifyOtp, resendOtp, loginUser, getCurrentUser, getUserProfile };
