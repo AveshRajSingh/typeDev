@@ -1,150 +1,51 @@
 "use client";
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import { getPara } from "../services/api";
+import { useTimer, useTypingState, useCapsLock } from "./hooks";
+import { StatsBar, CapsLockWarning, TypingArea, LoadingState, ErrorState } from "./ui";
 
 const TypingParagraph = ({ timer, difficulty, includeSpecialChars, onComplete }) => {
   const [paragraph, setParagraph] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [typedText, setTypedText] = useState("");
-  const [correctChars, setCorrectChars] = useState(0);
-  const [wrongChars, setWrongChars] = useState(0);
+  const [scrollOffset, setScrollOffset] = useState(0);
+  const [isFocused, setIsFocused] = useState(false);
+
   const inputRef = useRef(null);
   const textContainerRef = useRef(null);
-  const [scrollOffset, setScrollOffset] = useState(0);
   const lastScrollLine = useRef(0);
-  const [timeLeft, setTimeLeft] = useState(timer);
-  const [isTypingStarted, setIsTypingStarted] = useState(false);
-  const timerIntervalRef = useRef(null);
-  const startTimeRef = useRef(null);
-  const correctCharsRef = useRef(0);
-  const wrongCharsRef = useRef(0);
-  const consecutiveSpaces = useRef(0);
-  const [capsLockOn, setCapsLockOn] = useState(false);
+  const restartButtonRef = useRef(null);
 
-  const fetchParagraph = async () => {
-    setLoading(true);
-    setError(null);
-    setCurrentIndex(0);
-    setTypedText("");
-    setCorrectChars(0);
-    setWrongChars(0);
-    correctCharsRef.current = 0;
-    wrongCharsRef.current = 0;
-    consecutiveSpaces.current = 0;
-    setCapsLockOn(false);
-    setScrollOffset(0);
-    lastScrollLine.current = 0;
-    setTimeLeft(timer);
-    setIsTypingStarted(false);
-    startTimeRef.current = null;
-    if (timerIntervalRef.current) {
-      clearInterval(timerIntervalRef.current);
-      timerIntervalRef.current = null;
-    }
-    try {
-      const response = await getPara(
-        includeSpecialChars,
-        "en",
-        difficulty,
-        timer
-      );
-      setParagraph(response.paragraph || []);
-    } catch (error) {
-      console.error("Failed to fetch paragraph:", error);
-      setError("Failed to load paragraph. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const fullText = paragraph.join(" ");
+  const capsLockOn = useCapsLock();
+  
+  const typingState = useTypingState();
+  const { 
+    currentIndex, 
+    typedText, 
+    correctChars, 
+    wrongChars, 
+    correctCharsRef, 
+    wrongCharsRef,
+    handleBackspace,
+    handleCharacter,
+    reset: resetTyping
+  } = typingState;
 
-  useEffect(() => {
-    fetchParagraph();
-  }, [timer, difficulty, includeSpecialChars]);
-
-  useEffect(() => {
-    // Focus input when component mounts or paragraph changes
-    if (inputRef.current && paragraph.length > 0) {
-      inputRef.current.focus();
-    }
-  }, [paragraph]);
-
-  // Continuous Caps Lock detection
-  useEffect(() => {
-    const checkCapsLock = (e) => {
-      if (e.getModifierState && e.getModifierState('CapsLock')) {
-        setCapsLockOn(true);
-      } else {
-        setCapsLockOn(false);
-      }
-    };
-
-    // Check on any key event
-    window.addEventListener('keydown', checkCapsLock);
-    window.addEventListener('keyup', checkCapsLock);
-
-    return () => {
-      window.removeEventListener('keydown', checkCapsLock);
-      window.removeEventListener('keyup', checkCapsLock);
-    };
-  }, []);
-
-  // Timer countdown effect
-  useEffect(() => {
-    if (isTypingStarted && timeLeft > 0) {
-      timerIntervalRef.current = setInterval(() => {
-        setTimeLeft((prev) => {
-          if (prev <= 1) {
-            clearInterval(timerIntervalRef.current);
-            // Use setTimeout to ensure state is updated before calling handleTestComplete
-            setTimeout(() => {
-              handleTestComplete();
-            }, 100);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-
-      return () => {
-        if (timerIntervalRef.current) {
-          clearInterval(timerIntervalRef.current);
-        }
-      };
-    }
-  }, [isTypingStarted]);
-
-  // Effect to trigger completion when timer reaches 0
-  useEffect(() => {
-    if (isTypingStarted && timeLeft === 0) {
-      handleTestComplete();
-    }
-  }, [timeLeft]);
-
-  const handleTestComplete = () => {
-    // Use the full timer duration for calculation
+  const handleTestComplete = useCallback(() => {
     const timeElapsed = timer;
     const minutes = timeElapsed / 60;
     
-    // Prevent division by zero
     if (minutes === 0) return;
     
-    // Use ref values to get the latest counts
     const finalCorrectChars = correctCharsRef.current;
     const finalWrongChars = wrongCharsRef.current;
     
-    // Calculate words (5 characters = 1 word)
     const correctWords = finalCorrectChars / 5;
     const totalWords = (finalCorrectChars + finalWrongChars) / 5;
     
-    // Accurate WPM (only correct characters)
     const accurateWPM = Math.round(correctWords / minutes);
-    
-    // Raw WPM (all typed characters)
     const rawWPM = Math.round(totalWords / minutes);
-    
-    // Accuracy percentage
     const accuracy = Math.round((finalCorrectChars / (finalCorrectChars + finalWrongChars)) * 100) || 0;
 
     if (onComplete) {
@@ -157,12 +58,41 @@ const TypingParagraph = ({ timer, difficulty, includeSpecialChars, onComplete })
         timeElapsed,
       });
     }
-  };
+  }, [timer, correctCharsRef, wrongCharsRef, onComplete]);
 
-  const fullText = paragraph.join(" ");
+  const { timeLeft, isStarted: isTypingStarted, start: startTimer, reset: resetTimer } = useTimer(timer, handleTestComplete);
+
+  const fetchParagraph = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    resetTyping();
+    setScrollOffset(0);
+    lastScrollLine.current = 0;
+    setIsFocused(false);
+    resetTimer();
+
+    try {
+      const response = await getPara(includeSpecialChars, "en", difficulty, timer);
+      setParagraph(response.paragraph || []);
+    } catch (error) {
+      console.error("Failed to fetch paragraph:", error);
+      setError("Failed to load paragraph. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  }, [timer, difficulty, includeSpecialChars, resetTyping, resetTimer]);
 
   useEffect(() => {
-    // Update scroll position based on current character position
+    fetchParagraph();
+  }, [timer, difficulty, includeSpecialChars]);
+
+  useEffect(() => {
+    if (inputRef.current && paragraph.length > 0) {
+      inputRef.current.focus();
+    }
+  }, [paragraph]);
+
+  useEffect(() => {
     if (textContainerRef.current && fullText.length > 0) {
       const charElements = textContainerRef.current.querySelectorAll('span');
       if (charElements[currentIndex]) {
@@ -170,8 +100,6 @@ const TypingParagraph = ({ timer, difficulty, includeSpecialChars, onComplete })
         const containerRect = textContainerRef.current.getBoundingClientRect();
         const relativeTop = charRect.top - containerRect.top;
         
-        // Start scrolling when cursor reaches bottom of 3rd line (180px from top)
-        // Only scroll once per line by checking if we've moved down a full line
         const shouldScrollLine = Math.floor(relativeTop / 60);
         
         if (relativeTop >= 180 && shouldScrollLine > lastScrollLine.current) {
@@ -185,265 +113,75 @@ const TypingParagraph = ({ timer, difficulty, includeSpecialChars, onComplete })
   const handleKeyPress = (e) => {
     const key = e.key;
 
-    // Start timer on first keypress
+    // Allow Tab to focus restart button
+    if (key === "Tab") {
+      e.preventDefault();
+      restartButtonRef.current?.focus();
+      return;
+    }
+
     if (!isTypingStarted && key.length === 1) {
-      setIsTypingStarted(true);
-      startTimeRef.current = Date.now();
+      startTimer();
     }
 
     if (key === "Backspace") {
-      // Reset consecutive spaces counter on backspace
-      if (currentIndex > 0 && fullText[currentIndex - 1] === ' ') {
-        consecutiveSpaces.current = Math.max(0, consecutiveSpaces.current - 1);
-      }
-      if (currentIndex > 0) {
-        setCurrentIndex(currentIndex - 1);
-        setTypedText(typedText.slice(0, -1));
-        // Adjust correct/wrong counts
-        if (typedText[typedText.length - 1] === fullText[currentIndex - 1]) {
-          setCorrectChars(prev => {
-            const newVal = prev - 1;
-            correctCharsRef.current = newVal;
-            return newVal;
-          });
-        } else {
-          setWrongChars(prev => {
-            const newVal = prev - 1;
-            wrongCharsRef.current = newVal;
-            return newVal;
-          });
-        }
-      }
+      handleBackspace(fullText);
       return;
     }
 
     if (key.length === 1 && currentIndex < fullText.length) {
       const expectedChar = fullText[currentIndex];
-      
-      // Prevent more than 2 consecutive spaces ONLY if the next expected character is NOT a space
-      if (key === ' ' && expectedChar !== ' ') {
-        if (consecutiveSpaces.current >= 2) {
-          return; // Block the space
-        }
-        consecutiveSpaces.current++;
-      } else if (key !== ' ') {
-        // Reset counter when any non-space key is pressed
-        consecutiveSpaces.current = 0;
-      }
-      // If expectedChar is a space, allow it and don't increment counter
-      
-      setTypedText(typedText + key);
-
-      if (key === expectedChar) {
-        setCorrectChars(prev => {
-          const newVal = prev + 1;
-          correctCharsRef.current = newVal;
-          return newVal;
-        });
-      } else {
-        setWrongChars(prev => {
-          const newVal = prev + 1;
-          wrongCharsRef.current = newVal;
-          return newVal;
-        });
-      }
-
-      setCurrentIndex(currentIndex + 1);
+      handleCharacter(key, expectedChar, fullText);
     }
   };
-
-  const getCharacterStyle = (index) => {
-    if (index < currentIndex) {
-      // Already typed
-      if (typedText[index] === fullText[index]) {
-        return { color: "#22c55e" }; // Green for correct
-      } else {
-        return { color: "#ef4444", textDecoration: "underline" }; // Red for wrong
-      }
-    } else if (index === currentIndex) {
-      // Current character
-      return {
-        backgroundColor: "var(--primary)",
-        color: "#ffffff",
-      };
-    } else {
-      // Not yet typed
-      return { color: "var(--secondary)", opacity: 0.6 };
-    }
-  };
-
-  // Calculate which lines to show (3-line window)
-  const getVisibleText = () => {
-    const charsPerLine = 60; // Approximate characters per line
-    const lineHeight = 60; // Height of each line in pixels
-    const currentLine = Math.floor(currentIndex / charsPerLine);
-
-    return {
-      currentLine,
-    };
-  };
-
-  const { currentLine } = getVisibleText();
 
   if (loading) {
-    return (
-      <div className="max-w-4xl mx-auto mt-8 p-8">
-        <div
-          className="rounded-xl p-8 shadow-lg text-center"
-          style={{
-            backgroundColor: "var(--card)",
-          }}
-        >
-          <div className="flex items-center justify-center gap-3">
-            <div
-              className="w-6 h-6 border-4 border-t-transparent rounded-full animate-spin"
-              style={{ borderColor: "var(--primary)" }}
-            ></div>
-            <p style={{ color: "var(--secondary)" }}>Loading paragraph...</p>
-          </div>
-        </div>
-      </div>
-    );
+    return <LoadingState />;
   }
 
   if (error) {
-    return (
-      <div className="max-w-4xl mx-auto mt-8 p-8">
-        <div
-          className="rounded-xl p-8 shadow-lg text-center"
-          style={{
-            backgroundColor: "var(--card)",
-          }}
-        >
-          <p style={{ color: "var(--primary)" }} className="mb-4">
-            {error}
-          </p>
-          <button
-            onClick={fetchParagraph}
-            className="px-6 py-2 rounded-lg font-medium transition-all duration-200 hover:scale-105"
-            style={{
-              backgroundColor: "var(--primary)",
-              color: "#ffffff",
-            }}
-          >
-            Retry
-          </button>
-        </div>
-      </div>
-    );
+    return <ErrorState error={error} onRetry={fetchParagraph} />;
   }
 
   return (
     <div className="max-w-4xl mx-auto mt-8 p-8">
-      <div
-        className="rounded-xl p-8 shadow-lg transition-all duration-300"
-      >
-        {/* Caps Lock Warning */}
-        {capsLockOn && (
-          <div className="mb-4 p-3 rounded-lg flex items-center gap-2" style={{ backgroundColor: "#fef3c7", border: "1px solid #fbbf24" }}>
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="#f59e0b">
-              <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-            </svg>
-            <span style={{ color: "#92400e", fontSize: "14px", fontWeight: "500" }}>Caps Lock is ON</span>
-          </div>
-        )}
+      <div className="rounded-xl p-8 shadow-lg transition-all duration-300">
+        {capsLockOn && <CapsLockWarning />}
 
-        {/* Stats Bar */}
-        <div className="flex justify-between items-center mb-6 pb-4 border-b" style={{ borderColor: "var(--border)" }}>
-          <div className="flex gap-6">
-            <div>
-              <span style={{ color: "var(--secondary)" }} className="text-sm">
-                Time:{" "}
-              </span>
-              <span style={{ color: isTypingStarted ? "var(--primary)" : "var(--foreground)" }} className="font-semibold text-2xl">
-                {timeLeft}s
-              </span>
-            </div>
-            <div>
-              <span style={{ color: "var(--secondary)" }} className="text-sm">
-                Correct:{" "}
-              </span>
-              <span style={{ color: "#22c55e" }} className="font-semibold">
-                {correctChars}
-              </span>
-            </div>
-            <div>
-              <span style={{ color: "var(--secondary)" }} className="text-sm">
-                Wrong:{" "}
-              </span>
-              <span style={{ color: "#ef4444" }} className="font-semibold">
-                {wrongChars}
-              </span>
-            </div>
-            <div>
-              <span style={{ color: "var(--secondary)" }} className="text-sm">
-                Progress:{" "}
-              </span>
-              <span style={{ color: "var(--foreground)" }} className="font-semibold">
-                {currentIndex}/{fullText.length}
-              </span>
-            </div>
-          </div>
-          <button
-            onClick={fetchParagraph}
-            className="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:scale-105"
-            style={{
-              backgroundColor: "var(--input)",
-              color: "var(--foreground)",
-            }}
-          >
-            ↻ Restart
-          </button>
-        </div>
+        <StatsBar
+          timeLeft={timeLeft}
+          isTypingStarted={isTypingStarted}
+          correctChars={correctChars}
+          wrongChars={wrongChars}
+          currentIndex={currentIndex}
+          totalLength={fullText.length}
+          onRestart={fetchParagraph}
+          restartButtonRef={restartButtonRef}
+        />
 
-        {/* Typing Area - 3 Line Window */}
-        <div
-          className="relative overflow-hidden"
-          style={{ height: "200px" }} // Fixed height for 3 lines
-          onClick={() => inputRef.current?.focus()}
-        >
-          <div
-            ref={textContainerRef}
-            className="text-3xl leading-relaxed font-mono tracking-wide transition-transform duration-300 whitespace-pre-wrap"
-            style={{
-              transform: `translateY(-${scrollOffset}px)`,
-              lineHeight: "60px",
-            }}
-          >
-            {fullText.length > 0 ? (
-              fullText.split("").map((char, index) => (
-                <span
-                  key={index}
-                  className="transition-all duration-100"
-                  style={getCharacterStyle(index)}
-                >
-                  {char}
-                </span>
-              ))
-            ) : (
-              <p
-                className="text-center"
-                style={{ color: "var(--secondary)" }}
-              >
-                No paragraph available. Please adjust settings and try again.
-              </p>
-            )}
-          </div>
-        </div>
+        <TypingArea
+          fullText={fullText}
+          currentIndex={currentIndex}
+          typedText={typedText}
+          isFocused={isFocused}
+          scrollOffset={scrollOffset}
+          textContainerRef={textContainerRef}
+          onAreaClick={() => inputRef.current?.focus()}
+        />
 
-        {/* Hidden Input for Key Detection */}
         <input
           ref={inputRef}
           type="text"
           className="opacity-0 absolute"
           onKeyDown={handleKeyPress}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => setIsFocused(false)}
           autoFocus
         />
 
-        {/* Instruction */}
         <div className="mt-6 text-center">
           <p style={{ color: "var(--secondary)" }} className="text-sm">
-            Click anywhere to start typing. Press Backspace to correct mistakes.
+            Click anywhere to start typing. Press Backspace to correct mistakes. Press Tab + Enter to restart.
           </p>
         </div>
       </div>
