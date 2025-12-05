@@ -1,6 +1,7 @@
 import dotenv from 'dotenv';
 dotenv.config();
 import express from 'express';
+import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import { connectDb } from './db/index.js';
 
@@ -8,11 +9,12 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors("*"));
-
+app.use(cookieParser());
 import userRouter from './routes/user.route.js';
 app.use("/users", userRouter);
 
 import paraRouter from './routes/para.route.js';
+import cookieParser from 'cookie-parser';
 app.use("/para", paraRouter);
 
 connectDb().then(() => {

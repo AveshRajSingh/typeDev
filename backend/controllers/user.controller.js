@@ -2,6 +2,7 @@ import { User } from "../models/user.model.js";
 import { Otp } from "../models/otp.model.js";
 import bcrypt from "bcrypt";
 import {
+  generateAccessToken,
   generateRefreshToken,
   generateOtp,
 } from "../utility/generateToken.utility.js";
@@ -211,12 +212,101 @@ const resendOtp = async (req, res) => {
   }
 };
 
-const loginUser = async (req,res) => {
+const loginUser = async (req, res) => {
   try {
-    
-  } catch (error) {
-    
-  }
-}
+    const { identifier, password } = req.body; // identifier can be email or username
 
-export { createUser, verifyOtp, resendOtp };
+    // Validate required fields
+    if (!identifier || !password) {
+      return res.status(400).json({ 
+        message: "Email/Username and password are required" 
+      });
+    }
+
+    // Find user by either email or username
+    const user = await User.findOne({
+      $or: [{ email: identifier }, { username: identifier }]
+    });
+
+    if (!user) {
+      return res.status(404).json({ 
+        message: "User not found. Please check your credentials." 
+      });
+    }
+
+    // Check if email is verified
+    if (!user.isEmailVerified) {
+      return res.status(403).json({ 
+        message: "Please verify your email before logging in." 
+      });
+    }
+
+    // Verify password
+    const isPasswordValid = await user.isPasswordCorrect(password);
+    if (!isPasswordValid) {
+      return res.status(401).json({ 
+        message: "Invalid credentials" 
+      });
+    }
+
+    // Generate tokens
+    const accessToken = generateAccessToken(user);
+    const refreshToken = generateRefreshToken(user);
+
+    // Update refresh token in database
+    user.refreshToken = refreshToken;
+    await user.save();
+
+    // Cookie options
+    const cookieOptions = {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production', // true in production
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    };
+
+    // Get user without sensitive data
+    const userToBeSent = await User.findById(user._id).select(
+      "-password -refreshToken"
+    );
+
+    // Set cookies and send response
+    return res
+      .status(200)
+      .cookie('accessToken', accessToken, {
+        ...cookieOptions,
+        maxAge: 15 * 60 * 1000, // 15 minutes for access token
+      })
+      .cookie('refreshToken', refreshToken, cookieOptions)
+      .json({
+        message: "Login successful",
+        user: userToBeSent,
+        accessToken, // Also send in response for clients that prefer token storage
+      });
+
+  } catch (error) {
+    console.error("loginUser error:", error);
+    return res.status(500).json({ 
+      message: "Server error", 
+      error: error.message 
+    });
+  }
+};
+
+const getCurrentUser = async (req, res) => {
+  try {
+    // User is already attached to req by verifyJWT middleware
+    return res.status(200).json({
+      message: "User fetched successfully",
+      user: req.user,
+    });
+  } catch (error) {
+    console.error("getCurrentUser error:", error);
+    return res.status(500).json({ 
+      message: "Server error", 
+      error: error.message 
+    });
+  }
+};
+
+export { createUser, verifyOtp, resendOtp, loginUser, getCurrentUser };

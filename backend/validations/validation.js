@@ -40,3 +40,14 @@ export const resendOtpSchema = yup.object({
     .required("Username is required")
     .trim(),
 });
+
+export const loginUserSchema = yup.object({
+  identifier: yup
+    .string()
+    .required("Email or Username is required")
+    .trim(),
+  password: yup
+    .string()
+    .required("Password is required")
+    .trim()
+});
