@@ -26,9 +26,10 @@ export default function Home() {
     setTestResults(null);
   };
 
-  const handleLogout = () => {
-    logout();
-    router.push('/');
+  const handleProfileClick = () => {
+    if (user?.username) {
+      router.push(`/profile/${user.username}`);
+    }
   };
 
   return (
@@ -42,18 +43,27 @@ export default function Home() {
       <div className="absolute top-4 right-4 flex gap-3 items-center">
         {isAuthenticated && user ? (
           <>
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg" style={{ backgroundColor: "var(--card)" }}>
-              <span className="text-sm font-medium" style={{ color: "var(--foreground)" }}>
-                {user.username}
-              </span>
-            </div>
             <button
-              onClick={handleLogout}
-              className="px-3 py-1.5 rounded-lg hover:opacity-80 transition-opacity text-sm font-medium"
-              style={{ backgroundColor: "var(--primary)", color: "#ffffff" }}
-              aria-label="Logout"
+              onClick={handleProfileClick}
+              className="p-2 rounded-full hover:opacity-80 transition-opacity"
+              style={{ backgroundColor: "var(--primary)" }}
+              aria-label="View profile"
+              title="View Profile"
             >
-              Logout
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={2}
+                stroke="white"
+                className="w-6 h-6"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"
+                />
+              </svg>
             </button>
           </>
         ) : (

@@ -6,6 +6,7 @@ import {
   resendOtp,
   loginUser,
   getCurrentUser,
+  getUserProfile,
 } from "../controllers/user.controller.js";
 import { validate } from "../middlewares/validate.middleware.js";
 import {
@@ -24,5 +25,8 @@ router.post("/login", validate(loginUserSchema), loginUser);
 
 // Protected routes
 router.get("/me", verifyJWT, getCurrentUser);
+
+// Public profile route
+router.get("/profile/:username", getUserProfile);
 
 export default router;
