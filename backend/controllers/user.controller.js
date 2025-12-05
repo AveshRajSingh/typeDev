@@ -216,6 +216,8 @@ const loginUser = async (req, res) => {
   try {
     const { identifier, password } = req.body; // identifier can be email or username
 
+    console.log('Login attempt for identifier:', identifier);
+
     // Validate required fields
     if (!identifier || !password) {
       return res.status(400).json({ 
@@ -229,13 +231,17 @@ const loginUser = async (req, res) => {
     });
 
     if (!user) {
+      console.log('User not found for identifier:', identifier);
       return res.status(404).json({ 
         message: "User not found. Please check your credentials." 
       });
     }
 
+    console.log('User found:', user.username, '| Email verified:', user.isEmailVerified);
+
     // Check if email is verified
     if (!user.isEmailVerified) {
+      console.log('Email not verified for user:', user.username);
       return res.status(403).json({ 
         message: "Please verify your email before logging in." 
       });
@@ -243,6 +249,8 @@ const loginUser = async (req, res) => {
 
     // Verify password
     const isPasswordValid = await user.isPasswordCorrect(password);
+    console.log('Password validation result:', isPasswordValid);
+    
     if (!isPasswordValid) {
       return res.status(401).json({ 
         message: "Invalid credentials" 

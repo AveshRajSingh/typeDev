@@ -1,11 +1,14 @@
 "use client";
 import React, { useState } from "react";
+import { useUser } from "../../context/UserContext";
 
-const Login = ({ onSwitchToSignup }) => {
+const Login = ({ onSwitchToSignup, onClose }) => {
+  const { login, loading } = useUser();
   const [formData, setFormData] = useState({
     usernameOrEmail: "",
     password: "",
   });
+  const [error, setError] = useState("");
   const [isFocused, setIsFocused] = useState({
     usernameOrEmail: false,
     password: false,
@@ -29,10 +32,25 @@ const Login = ({ onSwitchToSignup }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError("");
+    
+    console.log('Login form submitted with:', formData.usernameOrEmail);
+    
     try {
-      console.log("Login attempt:", formData);
+      const result = await login(formData.usernameOrEmail, formData.password);
+      
+      if (result.success) {
+        console.log("Login successful:", result.data);
+        // Close modal if onClose function is provided
+        if (onClose) {
+          onClose();
+        }
+      } else {
+        setError(result.error || "Login failed. Please try again.");
+      }
     } catch (error) {
       console.error("Login error:", error);
+      setError("An unexpected error occurred. Please try again.");
     }
   };
 
@@ -51,6 +69,19 @@ const Login = ({ onSwitchToSignup }) => {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
+        {error && (
+          <div
+            className="p-3 rounded-lg text-sm"
+            style={{
+              backgroundColor: "rgba(239, 68, 68, 0.1)",
+              color: "#ef4444",
+              border: "1px solid rgba(239, 68, 68, 0.3)",
+            }}
+          >
+            {error}
+          </div>
+        )}
+
         <div className="relative">
           <label
             htmlFor="usernameOrEmail"
@@ -133,13 +164,14 @@ const Login = ({ onSwitchToSignup }) => {
 
         <button
           type="submit"
-          className="w-full py-3 px-4 rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 hover:shadow-lg active:scale-95"
+          disabled={loading}
+          className="w-full py-3 px-4 rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 hover:shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
           style={{
             backgroundColor: "var(--primary)",
             color: "#ffffff",
           }}
         >
-          Sign In
+          {loading ? "Signing In..." : "Sign In"}
         </button>
       </form>
 

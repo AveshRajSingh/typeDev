@@ -6,15 +6,22 @@ import cors from 'cors';
 import { connectDb } from './db/index.js';
 
 const app = express();
+
+// CORS configuration for credentials
+app.use(cors({
+  origin: 'http://localhost:3000', // Frontend URL
+  credentials: true, // Allow cookies
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cors("*"));
 app.use(cookieParser());
 import userRouter from './routes/user.route.js';
 app.use("/users", userRouter);
 
 import paraRouter from './routes/para.route.js';
-import cookieParser from 'cookie-parser';
 app.use("/para", paraRouter);
 
 connectDb().then(() => {
