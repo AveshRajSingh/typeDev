@@ -69,7 +69,7 @@ const signupUser = async (username, email, password) => {
     return response.data;
   } catch (error) {
     const errorMessage = error.response?.data?.message || "Signup failed";
-    console.error("Signup error:", errorMessage);
+    console.error("API: Signup error:", errorMessage, error.response?.data);
     throw new Error(errorMessage);
   }
 };

@@ -1,5 +1,6 @@
 'use client'
 import React, { useState } from 'react'
+import { signupUser, verifyOtp, resendOtp } from '../../services/api'
 
 const Signup = ({ onSwitchToLogin }) => {
   const [formData, setFormData] = useState({
@@ -12,8 +13,14 @@ const Signup = ({ onSwitchToLogin }) => {
     username: false,
     email: false,
     password: false,
-    confirmPassword: false
+    confirmPassword: false,
+    otp: false
   })
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [otpSent, setOtpSent] = useState(false)
+  const [otp, setOtp] = useState('')
+  const [resendLoading, setResendLoading] = useState(false)
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -33,14 +40,70 @@ const Signup = ({ onSwitchToLogin }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    setError('')
+
+    console.log('Signup form submitted with:', formData)
+
     if (formData.password !== formData.confirmPassword) {
-      alert('Passwords do not match!')
+      setError('Passwords do not match!')
       return
     }
+
+    setLoading(true)
     try {
-      console.log('Signup attempt:', formData)
+      console.log('Calling signupUser API with:', {
+        username: formData.username,
+        email: formData.email,
+        password: '***' // Don't log actual password
+      })
+      
+      const response = await signupUser(formData.username, formData.email, formData.password)
+      console.log('Signup successful:', response)
+      setOtpSent(true)
+      setError('')
     } catch (error) {
       console.error('Signup error:', error)
+      setError(error.message || 'Signup failed. Please try again.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleVerifyOtp = async (e) => {
+    e.preventDefault()
+    setError('')
+    setLoading(true)
+
+    try {
+      const response = await verifyOtp(formData.username, otp)
+      console.log('OTP verified:', response)
+      setError('')
+      // Optionally redirect or show success message
+      alert('Account verified successfully! Please login.')
+      if (onSwitchToLogin) {
+        onSwitchToLogin()
+      }
+    } catch (error) {
+      console.error('OTP verification error:', error)
+      setError(error.message || 'Invalid OTP. Please try again.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleResendOtp = async () => {
+    setError('')
+    setResendLoading(true)
+
+    try {
+      const response = await resendOtp(formData.username)
+      console.log('OTP resent:', response)
+      alert('OTP has been resent to your email.')
+    } catch (error) {
+      console.error('Resend OTP error:', error)
+      setError(error.message || 'Failed to resend OTP. Please try again.')
+    } finally {
+      setResendLoading(false)
     }
   }
 
@@ -48,14 +111,28 @@ const Signup = ({ onSwitchToLogin }) => {
     <div className="animate-fadeIn">
       <div className="text-center mb-4">
         <h1 className='text-xl font-bold mb-1' style={{ color: 'var(--foreground)' }}>
-          Create Account
+          {otpSent ? 'Verify Your Email' : 'Create Account'}
         </h1>
         <p className='text-sm' style={{ color: 'var(--secondary)' }}>
-          Join us and start your journey
+          {otpSent ? 'Enter the OTP sent to your email' : 'Join us and start your journey'}
         </p>
       </div>
-      
-      <form onSubmit={handleSubmit} className='space-y-3'>
+
+      {error && (
+        <div
+          className="p-3 rounded-lg text-sm mb-3"
+          style={{
+            backgroundColor: "rgba(239, 68, 68, 0.1)",
+            color: "#ef4444",
+            border: "1px solid rgba(239, 68, 68, 0.3)",
+          }}
+        >
+          {error}
+        </div>
+      )}
+
+      {!otpSent ? (
+        <form onSubmit={handleSubmit} className='space-y-3'>
         <div className="relative">
           <label
             htmlFor='username'
@@ -210,15 +287,84 @@ const Signup = ({ onSwitchToLogin }) => {
 
         <button
           type='submit'
-          className='w-full py-2.5 px-4 rounded-lg font-semibold transition-all duration-200 hover:brightness-90 active:brightness-75'
+          disabled={loading}
+          className='w-full py-2.5 px-4 rounded-lg font-semibold transition-all duration-200 hover:brightness-90 active:brightness-75 disabled:opacity-50 disabled:cursor-not-allowed'
           style={{ 
             backgroundColor: 'var(--primary)',
             color: '#ffffff'
           }}
         >
-          Create Account
+          {loading ? 'Creating Account...' : 'Create Account'}
         </button>
       </form>
+      ) : (
+        <form onSubmit={handleVerifyOtp} className='space-y-3'>
+          <div className="relative">
+            <label
+              htmlFor='otp'
+              className={`absolute left-3 transition-all duration-300 ease-out pointer-events-none z-10 ${
+                isFocused.otp || otp
+                  ? '-top-3 text-xs px-2 scale-95'
+                  : 'top-3 text-sm'
+              }`}
+              style={{
+                color: isFocused.otp ? 'var(--primary)' : 'var(--secondary)',
+                textShadow: isFocused.otp || otp
+                  ? '0 0 8px var(--card), 0 0 4px var(--card), -1px 0 2px var(--card), 1px 0 2px var(--card), 0 -1px 2px var(--card), 0 1px 2px var(--card)'
+                  : 'none',
+              }}
+            >
+              Enter OTP
+            </label>
+            <input
+              type='text'
+              id='otp'
+              name='otp'
+              value={otp}
+              onChange={(e) => setOtp(e.target.value)}
+              onFocus={() => handleFocus('otp')}
+              onBlur={() => handleBlur('otp')}
+              className='w-full px-4 py-2.5 rounded-lg transition-all duration-200 focus:outline-none'
+              style={{ 
+                backgroundColor: 'var(--input)',
+                borderWidth: '2px',
+                borderStyle: 'solid',
+                borderColor: isFocused.otp ? 'var(--primary)' : 'transparent',
+                color: 'var(--foreground)',
+                transform: isFocused.otp ? 'scale(1.01)' : 'scale(1)',
+              }}
+              required
+              maxLength={6}
+            />
+          </div>
+
+          <button
+            type='submit'
+            disabled={loading}
+            className='w-full py-2.5 px-4 rounded-lg font-semibold transition-all duration-200 hover:brightness-90 active:brightness-75 disabled:opacity-50 disabled:cursor-not-allowed'
+            style={{ 
+              backgroundColor: 'var(--primary)',
+              color: '#ffffff'
+            }}
+          >
+            {loading ? 'Verifying...' : 'Verify OTP'}
+          </button>
+
+          <button
+            type='button'
+            onClick={handleResendOtp}
+            disabled={resendLoading}
+            className='w-full py-2 px-4 rounded-lg font-medium transition-all duration-200 hover:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed'
+            style={{ 
+              backgroundColor: 'transparent',
+              color: 'var(--primary)',
+              border: '1px solid var(--primary)'
+            }}
+          >
+            {resendLoading ? 'Resending...' : 'Resend OTP'}
+          </button>
+        </form>
+      )}
 
       <div className='relative my-4'>
         <div
