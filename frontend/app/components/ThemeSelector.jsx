@@ -13,8 +13,8 @@ export default function ThemeSelector() {
     { value: 'dark', label: 'Dark', icon: '🌙' },
     { value: 'ocean', label: 'Ocean', icon: '🌊' },
     { value: 'purple', label: 'Purple', icon: '💜' },
-    { value: 'red', label: 'Red', icon: '❤️' },
-    { value: 'blue', label: 'Blue', icon: '💙' },
+    { value: 'slate', label: 'Slate', icon: '⚙️' },
+    { value: 'nord', label: 'Nord', icon: '❄️' },
   ]
 
   const currentThemeOption = themeOptions.find(opt => opt.value === theme)
@@ -45,14 +45,17 @@ export default function ThemeSelector() {
       {isOpen && (
         <>
           <div
-            className="fixed inset-0 z-10"
+            className="fixed inset-0 z-30"
             onClick={() => setIsOpen(false)}
           />
           <div
-            className="absolute right-0 mt-2 w-48 rounded-lg border shadow-lg z-20 overflow-hidden"
+            className={`absolute right-0 mt-2 w-48 rounded-lg shadow-2xl z-40 overflow-hidden transition-all duration-300 ease-out ${
+              isOpen
+                ? "opacity-100 translate-y-0"
+                : "opacity-0 -translate-y-2 pointer-events-none"
+            }`}
             style={{
               backgroundColor: 'var(--card)',
-              borderColor: 'var(--cardBorder)',
             }}
           >
             {themeOptions.map((option) => (
@@ -62,7 +65,7 @@ export default function ThemeSelector() {
                   changeTheme(option.value)
                   setIsOpen(false)
                 }}
-                className="w-full flex items-center gap-3 px-4 py-3 text-left transition-all duration-200 hover:opacity-80"
+                className="w-full flex items-center gap-3 px-4 py-3 text-left transition-all duration-200 hover:opacity-90"
                 style={{
                   backgroundColor: theme === option.value ? 'var(--primary)' : 'transparent',
                   color: theme === option.value ? '#ffffff' : 'var(--foreground)',

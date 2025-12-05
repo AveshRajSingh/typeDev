@@ -1,0 +1,191 @@
+"use client";
+import React, { useState } from "react";
+
+const Login = ({ onSwitchToSignup }) => {
+  const [formData, setFormData] = useState({
+    usernameOrEmail: "",
+    password: "",
+  });
+  const [isFocused, setIsFocused] = useState({
+    usernameOrEmail: false,
+    password: false,
+  });
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleFocus = (field) => {
+    setIsFocused((prev) => ({ ...prev, [field]: true }));
+  };
+
+  const handleBlur = (field) => {
+    setIsFocused((prev) => ({ ...prev, [field]: false }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      console.log("Login attempt:", formData);
+    } catch (error) {
+      console.error("Login error:", error);
+    }
+  };
+
+  return (
+    <div className="animate-fadeIn">
+      <div className="text-center mb-6">
+        <h1
+          className="text-2xl font-bold mb-1"
+          style={{ color: "var(--foreground)" }}
+        >
+          Welcome Back
+        </h1>
+        <p className="text-sm" style={{ color: "var(--secondary)" }}>
+          Sign in to continue your journey
+        </p>
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="relative">
+          <label
+            htmlFor="usernameOrEmail"
+            className={`absolute left-3 transition-all duration-300 ease-out pointer-events-none z-10 ${
+              isFocused.usernameOrEmail || formData.usernameOrEmail
+                ? "-top-3 text-xs px-2 scale-95"
+                : "top-3 text-sm"
+            }`}
+            style={{
+              color: isFocused.usernameOrEmail
+                ? "var(--primary)"
+                : "var(--secondary)",
+              textShadow: isFocused.usernameOrEmail || formData.usernameOrEmail
+                ? "0 0 8px var(--card), 0 0 4px var(--card), -1px 0 2px var(--card), 1px 0 2px var(--card), 0 -1px 2px var(--card), 0 1px 2px var(--card)"
+                : "none",
+            }}
+          >
+            Username or Email
+          </label>
+          <input
+            type="text"
+            id="usernameOrEmail"
+            name="usernameOrEmail"
+            value={formData.usernameOrEmail}
+            onChange={handleChange}
+            onFocus={() => handleFocus("usernameOrEmail")}
+            onBlur={() => handleBlur("usernameOrEmail")}
+            className="w-full px-4 py-3 rounded-lg transition-all duration-200 focus:outline-none"
+            style={{
+              backgroundColor: "var(--input)",
+              borderWidth: "2px",
+              borderStyle: "solid",
+              borderColor: isFocused.usernameOrEmail
+                ? "var(--primary)"
+                : "transparent",
+              color: "var(--foreground)",
+              transform: isFocused.usernameOrEmail ? "scale(1.01)" : "scale(1)",
+            }}
+            required
+          />
+        </div>
+
+        <div className="relative">
+          <label
+            htmlFor="password"
+            className={`absolute left-3 transition-all duration-300 ease-out pointer-events-none z-10 ${
+              isFocused.password || formData.password
+                ? "-top-3 text-xs px-2 scale-95"
+                : "top-3 text-sm"
+            }`}
+            style={{
+              color: isFocused.password ? "var(--primary)" : "var(--secondary)",
+              textShadow: isFocused.password || formData.password
+                ? "0 0 8px var(--card), 0 0 4px var(--card), -1px 0 2px var(--card), 1px 0 2px var(--card), 0 -1px 2px var(--card), 0 1px 2px var(--card)"
+                : "none",
+            }}
+          >
+            Password
+          </label>
+          <input
+            type="password"
+            id="password"
+            name="password"
+            value={formData.password}
+            onChange={handleChange}
+            onFocus={() => handleFocus("password")}
+            onBlur={() => handleBlur("password")}
+            className="w-full px-4 py-3 rounded-lg transition-all duration-200 focus:outline-none"
+            style={{
+              backgroundColor: "var(--input)",
+              borderWidth: "2px",
+              borderStyle: "solid",
+              borderColor: isFocused.password ? "var(--primary)" : "transparent",
+              color: "var(--foreground)",
+              transform: isFocused.password ? "scale(1.01)" : "scale(1)",
+            }}
+            required
+          />
+        </div>
+
+        <button
+          type="submit"
+          className="w-full py-3 px-4 rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 hover:shadow-lg active:scale-95"
+          style={{
+            backgroundColor: "var(--primary)",
+            color: "#ffffff",
+          }}
+        >
+          Sign In
+        </button>
+      </form>
+
+      <div className="relative my-5">
+        <div
+          className="absolute inset-0 flex items-center"
+          style={{ borderTop: "1px solid var(--border)" }}
+        ></div>
+        <div className="relative flex justify-center text-xs uppercase">
+          <span
+            className="px-2"
+            style={{ backgroundColor: "var(--card)", color: "var(--secondary)" }}
+          >
+            Or
+          </span>
+        </div>
+      </div>
+
+      <div className="text-center">
+        <p style={{ color: "var(--foreground)" }} className="text-sm">
+          Don't have an account?{" "}
+          <button
+            onClick={onSwitchToSignup}
+            className="font-semibold transition-all duration-200 hover:underline inline-flex items-center gap-1 group"
+            style={{ color: "var(--primary)" }}
+          >
+            Create Account
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={2}
+              stroke="currentColor"
+              className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"
+              />
+            </svg>
+          </button>
+        </p>
+      </div>
+    </div>
+  );
+};
+
+export default Login;
