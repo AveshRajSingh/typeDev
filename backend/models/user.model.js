@@ -52,8 +52,10 @@ import bcrypt from "bcrypt";
       type: Number,
       default: 0,
     },
-    
-
+    testCompletions: {
+      type: Number,
+      default: 0,
+    },
     // for payment and subscriptions
      isPremium:{
         type:Boolean,

@@ -330,7 +330,6 @@ const insertPara = async (req, res) => {
     }
   ];
   try {
-    console.log("Inserting paragraphs...");
     await Paragraph.insertMany(data);
     res.status(200).json({ message: "Paragraphs inserted successfully" });
   } catch (error) {
