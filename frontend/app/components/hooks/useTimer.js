@@ -5,14 +5,20 @@ export const useTimer = (initialTime, onComplete) => {
   const [isStarted, setIsStarted] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const timerIntervalRef = useRef(null);
+  const onCompleteRef = useRef(onComplete);
+
+  // Keep onComplete ref updated
+  useEffect(() => {
+    onCompleteRef.current = onComplete;
+  }, [onComplete]);
 
   useEffect(() => {
-    if (isStarted && !isPaused && timeLeft > 0) {
+    if (isStarted && !isPaused) {
       timerIntervalRef.current = setInterval(() => {
         setTimeLeft((prev) => {
           if (prev <= 1) {
             clearInterval(timerIntervalRef.current);
-            setTimeout(onComplete, 100);
+            setTimeout(() => onCompleteRef.current(), 100);
             return 0;
           }
           return prev - 1;
@@ -31,15 +37,18 @@ export const useTimer = (initialTime, onComplete) => {
         timerIntervalRef.current = null;
       }
     }
-  }, [isStarted, isPaused, onComplete, timeLeft]);
+  }, [isStarted, isPaused]);
 
   useEffect(() => {
     if (isStarted && timeLeft === 0) {
-      onComplete();
+      onCompleteRef.current();
     }
-  }, [timeLeft, isStarted, onComplete]);
+  }, [timeLeft, isStarted]);
 
-  const start = () => setIsStarted(true);
+  const start = () => {
+    setIsStarted(true);
+    setIsPaused(false); // Ensure timer is not paused when starting
+  };
   
   const pause = () => setIsPaused(true);
   

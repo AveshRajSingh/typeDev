@@ -134,6 +134,38 @@ const startTest = async () => {
   }
 };
 
+// AI Feedback APIs
+const getAIFeedback = async (testData, difficulty, timeInSeconds, guestToken = null) => {
+  try {
+    const response = await api.post('/ai/feedback', {
+      testData,
+      difficulty,
+      timeInSeconds,
+      guestToken,
+    });
+    return response.data;
+  } catch (error) {
+    const errorMessage = error.response?.data?.message || "Failed to get AI feedback";
+    console.error("Get AI feedback error:", errorMessage);
+    throw new Error(errorMessage);
+  }
+};
+
+const generateAIParagraph = async (errorFrequencyMap, wordCount = 50, difficulty = 'medium') => {
+  try {
+    const response = await api.post('/ai/generate-paragraph', {
+      errorFrequencyMap,
+      wordCount,
+      difficulty,
+    });
+    return response.data;
+  } catch (error) {
+    const errorMessage = error.response?.data?.message || "Failed to generate paragraph";
+    console.error("Generate AI paragraph error:", errorMessage);
+    throw new Error(errorMessage);
+  }
+};
+
 export { 
   getPara, 
   loginUser, 
@@ -143,5 +175,7 @@ export {
   resendOtp,
   getUserProfile,
   saveTestResult,
-  startTest
+  startTest,
+  getAIFeedback,
+  generateAIParagraph,
 };

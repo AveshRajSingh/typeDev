@@ -5,6 +5,8 @@ export const useTypingState = () => {
   const [typedText, setTypedText] = useState('');
   const [correctChars, setCorrectChars] = useState(0);
   const [wrongChars, setWrongChars] = useState(0);
+  const [errorLog, setErrorLog] = useState([]);
+  const [errorFrequencyMap, setErrorFrequencyMap] = useState({});
   
   const correctCharsRef = useRef(0);
   const wrongCharsRef = useRef(0);
@@ -76,6 +78,20 @@ export const useTypingState = () => {
       setCurrentIndex(currentIndex + 1);
       return true;
     } else {
+      // Log the error for AI analysis
+      const errorEntry = {
+        position: currentIndex,
+        expected: expectedChar,
+        typed: key,
+      };
+      setErrorLog(prev => [...prev, errorEntry]);
+      
+      // Update error frequency map
+      setErrorFrequencyMap(prev => ({
+        ...prev,
+        [expectedChar]: (prev[expectedChar] || 0) + 1,
+      }));
+      
       // Increment wrong attempts counter
       consecutiveWrongAttempts.current++;
       
@@ -99,6 +115,8 @@ export const useTypingState = () => {
     setTypedText('');
     setCorrectChars(0);
     setWrongChars(0);
+    setErrorLog([]);
+    setErrorFrequencyMap({});
     correctCharsRef.current = 0;
     wrongCharsRef.current = 0;
     consecutiveSpaces.current = 0;
@@ -110,6 +128,8 @@ export const useTypingState = () => {
     typedText,
     correctChars,
     wrongChars,
+    errorLog,
+    errorFrequencyMap,
     correctCharsRef,
     wrongCharsRef,
     handleBackspace,
