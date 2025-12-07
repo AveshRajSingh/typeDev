@@ -61,7 +61,7 @@ const TypingParagraph = ({ timer, difficulty, includeSpecialChars, onComplete, i
     }
   }, [timer, correctCharsRef, wrongCharsRef, onComplete]);
 
-  const { timeLeft, isStarted: isTypingStarted, start: startTimer, reset: resetTimer } = useTimer(timer, handleTestComplete);
+  const { timeLeft, isStarted: isTypingStarted, start: startTimer, pause: pauseTimer, resume: resumeTimer, reset: resetTimer } = useTimer(timer, handleTestComplete);
 
   const fetchParagraph = useCallback(async () => {
     setLoading(true);
@@ -186,8 +186,20 @@ const TypingParagraph = ({ timer, difficulty, includeSpecialChars, onComplete, i
           type="text"
           className="opacity-0 absolute"
           onKeyDown={handleKeyPress}
-          onFocus={() => setIsFocused(true)}
-          onBlur={() => setIsFocused(false)}
+          onFocus={() => {
+            setIsFocused(true);
+            // Resume timer when user focuses back if typing has started
+            if (isTypingStarted) {
+              resumeTimer();
+            }
+          }}
+          onBlur={() => {
+            setIsFocused(false);
+            // Pause timer when user loses focus if typing has started
+            if (isTypingStarted) {
+              pauseTimer();
+            }
+          }}
           autoFocus
         />
 

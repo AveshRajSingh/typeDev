@@ -3,10 +3,11 @@ import { useState, useRef, useEffect } from 'react';
 export const useTimer = (initialTime, onComplete) => {
   const [timeLeft, setTimeLeft] = useState(initialTime);
   const [isStarted, setIsStarted] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
   const timerIntervalRef = useRef(null);
 
   useEffect(() => {
-    if (isStarted && timeLeft > 0) {
+    if (isStarted && !isPaused && timeLeft > 0) {
       timerIntervalRef.current = setInterval(() => {
         setTimeLeft((prev) => {
           if (prev <= 1) {
@@ -23,8 +24,14 @@ export const useTimer = (initialTime, onComplete) => {
           clearInterval(timerIntervalRef.current);
         }
       };
+    } else {
+      // Clear interval when paused
+      if (timerIntervalRef.current) {
+        clearInterval(timerIntervalRef.current);
+        timerIntervalRef.current = null;
+      }
     }
-  }, [isStarted, onComplete]);
+  }, [isStarted, isPaused, onComplete, timeLeft]);
 
   useEffect(() => {
     if (isStarted && timeLeft === 0) {
@@ -34,14 +41,19 @@ export const useTimer = (initialTime, onComplete) => {
 
   const start = () => setIsStarted(true);
   
+  const pause = () => setIsPaused(true);
+  
+  const resume = () => setIsPaused(false);
+  
   const reset = () => {
     setTimeLeft(initialTime);
     setIsStarted(false);
+    setIsPaused(false);
     if (timerIntervalRef.current) {
       clearInterval(timerIntervalRef.current);
       timerIntervalRef.current = null;
     }
   };
 
-  return { timeLeft, isStarted, start, reset };
+  return { timeLeft, isStarted, isPaused, start, pause, resume, reset };
 };
