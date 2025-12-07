@@ -52,7 +52,7 @@ import bcrypt from "bcrypt";
       type: Number,
       default: 0,
     },
-    testCompletions: {
+    testsCompleted: {
       type: Number,
       default: 0,
     },

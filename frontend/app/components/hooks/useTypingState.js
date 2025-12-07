@@ -9,6 +9,7 @@ export const useTypingState = () => {
   const correctCharsRef = useRef(0);
   const wrongCharsRef = useRef(0);
   const consecutiveSpaces = useRef(0);
+  const consecutiveWrongAttempts = useRef(0);
 
   const handleCorrectChar = () => {
     setCorrectChars(prev => {
@@ -49,6 +50,9 @@ export const useTypingState = () => {
         });
       }
     }
+    
+    // Reset consecutive wrong attempts when backspacing
+    consecutiveWrongAttempts.current = 0;
   };
 
   const handleCharacter = (key, expectedChar, fullText) => {
@@ -62,16 +66,32 @@ export const useTypingState = () => {
       consecutiveSpaces.current = 0;
     }
 
-    setTypedText(typedText + key);
-    
+    // Check if the key is correct
     if (key === expectedChar) {
+      // Reset consecutive wrong attempts on correct key
+      consecutiveWrongAttempts.current = 0;
+      
+      setTypedText(typedText + key);
       handleCorrectChar();
+      setCurrentIndex(currentIndex + 1);
+      return true;
     } else {
+      // Increment wrong attempts counter
+      consecutiveWrongAttempts.current++;
+      
+      // If 3 or more consecutive wrong attempts, don't move cursor
+      if (consecutiveWrongAttempts.current >= 3) {
+        // Still count as wrong char but don't advance
+        handleWrongChar();
+        return false;
+      }
+      
+      // Less than 3 wrong attempts, allow cursor to move
+      setTypedText(typedText + key);
       handleWrongChar();
+      setCurrentIndex(currentIndex + 1);
+      return true;
     }
-    
-    setCurrentIndex(currentIndex + 1);
-    return true;
   };
 
   const reset = () => {
@@ -82,6 +102,7 @@ export const useTypingState = () => {
     correctCharsRef.current = 0;
     wrongCharsRef.current = 0;
     consecutiveSpaces.current = 0;
+    consecutiveWrongAttempts.current = 0;
   };
 
   return {

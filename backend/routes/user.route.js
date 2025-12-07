@@ -7,6 +7,8 @@ import {
   loginUser,
   getCurrentUser,
   getUserProfile,
+  incrementTestsTaken,
+  saveTestResult,
 } from "../controllers/user.controller.js";
 import { validate } from "../middlewares/validate.middleware.js";
 import {
@@ -14,6 +16,7 @@ import {
   verifyOtpSchema,
   resendOtpSchema,
   loginUserSchema,
+  saveTestResultSchema,
 } from "../validations/validation.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 const router = Router();
@@ -25,6 +28,8 @@ router.post("/login", validate(loginUserSchema), loginUser);
 
 // Protected routes
 router.get("/me", verifyJWT, getCurrentUser);
+router.post("/start-test", verifyJWT, incrementTestsTaken);
+router.post("/save-result", verifyJWT, validate(saveTestResultSchema), saveTestResult);
 
 // Public profile route
 router.get("/profile/:username", getUserProfile);

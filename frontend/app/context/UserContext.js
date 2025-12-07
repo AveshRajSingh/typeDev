@@ -40,11 +40,9 @@ export const UserProvider = ({ children }) => {
 
   const login = async (identifier, password) => {
     try {
-      console.log('UserContext: Calling apiLoginUser with identifier:', identifier)
       setLoading(true)
       setError(null)
       const response = await apiLoginUser(identifier, password)
-      console.log('UserContext: Login response received:', response)
       setUser(response.user)
       return { success: true, data: response }
     } catch (err) {

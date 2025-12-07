@@ -1,15 +1,16 @@
 "use client";
 import React, { useEffect, useState, useRef, useCallback } from "react";
-import { getPara } from "../services/api";
+import { getPara, startTest } from "../services/api";
 import { useTimer, useTypingState, useCapsLock } from "./hooks";
 import { StatsBar, CapsLockWarning, TypingArea, LoadingState, ErrorState } from "./ui";
 
-const TypingParagraph = ({ timer, difficulty, includeSpecialChars, onComplete }) => {
+const TypingParagraph = ({ timer, difficulty, includeSpecialChars, onComplete, isAuthenticated }) => {
   const [paragraph, setParagraph] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [scrollOffset, setScrollOffset] = useState(0);
   const [isFocused, setIsFocused] = useState(false);
+  const [hasIncrementedTest, setHasIncrementedTest] = useState(false);
 
   const inputRef = useRef(null);
   const textContainerRef = useRef(null);
@@ -70,6 +71,7 @@ const TypingParagraph = ({ timer, difficulty, includeSpecialChars, onComplete })
     lastScrollLine.current = 0;
     setIsFocused(false);
     resetTimer();
+    setHasIncrementedTest(false);
 
     try {
       const response = await getPara(includeSpecialChars, "en", difficulty, timer);
@@ -110,7 +112,7 @@ const TypingParagraph = ({ timer, difficulty, includeSpecialChars, onComplete })
     }
   }, [currentIndex, fullText]);
 
-  const handleKeyPress = (e) => {
+  const handleKeyPress = async (e) => {
     const key = e.key;
 
     // Allow Tab to focus restart button
@@ -122,6 +124,16 @@ const TypingParagraph = ({ timer, difficulty, includeSpecialChars, onComplete })
 
     if (!isTypingStarted && key.length === 1) {
       startTimer();
+      
+      // Increment testsTaken when user starts typing (only for authenticated users)
+      if (isAuthenticated && !hasIncrementedTest) {
+        setHasIncrementedTest(true);
+        try {
+          await startTest();
+        } catch (error) {
+          console.error("Failed to increment test counter:", error);
+        }
+      }
     }
 
     if (key === "Backspace") {

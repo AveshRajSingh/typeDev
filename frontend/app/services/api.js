@@ -112,6 +112,28 @@ const getUserProfile = async (username) => {
   }
 };
 
+const saveTestResult = async (testData) => {
+  try {
+    const response = await api.post('/users/save-result', testData);
+    return response.data;
+  } catch (error) {
+    const errorMessage = error.response?.data?.message || "Failed to save test result";
+    console.error("Save test result error:", errorMessage);
+    throw new Error(errorMessage);
+  }
+};
+
+const startTest = async () => {
+  try {
+    const response = await api.post('/users/start-test');
+    return response.data;
+  } catch (error) {
+    const errorMessage = error.response?.data?.message || "Failed to start test";
+    console.error("Start test error:", errorMessage);
+    throw new Error(errorMessage);
+  }
+};
+
 export { 
   getPara, 
   loginUser, 
@@ -119,5 +141,7 @@ export {
   signupUser, 
   verifyOtp, 
   resendOtp,
-  getUserProfile 
+  getUserProfile,
+  saveTestResult,
+  startTest
 };

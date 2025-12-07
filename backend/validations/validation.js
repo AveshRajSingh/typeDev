@@ -51,3 +51,31 @@ export const loginUserSchema = yup.object({
     .required("Password is required")
     .trim()
 });
+
+export const saveTestResultSchema = yup.object({
+  wpm: yup
+    .number()
+    .required("WPM is required")
+    .min(0, "WPM must be a positive number"),
+  accuracy: yup
+    .number()
+    .required("Accuracy is required")
+    .min(0, "Accuracy must be at least 0")
+    .max(100, "Accuracy cannot exceed 100"),
+  rawWPM: yup
+    .number()
+    .required("Raw WPM is required")
+    .min(0, "Raw WPM must be a positive number"),
+  correctChars: yup
+    .number()
+    .required("Correct characters count is required")
+    .min(0, "Correct characters must be a positive number"),
+  wrongChars: yup
+    .number()
+    .required("Wrong characters count is required")
+    .min(0, "Wrong characters must be a positive number"),
+  timeInSeconds: yup
+    .number()
+    .required("Time in seconds is required")
+    .min(1, "Time must be at least 1 second"),
+});

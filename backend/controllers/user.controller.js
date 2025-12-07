@@ -341,7 +341,7 @@ const getUserProfile = async (req, res) => {
       bestWPM: user.bestWPM,
       avgAccuracy: user.avgAccuracy,
       bestAccuracy: user.bestAccuracy || 0,
-      testsCompleted: user.testsTaken, // using testsTaken as completed for now
+      testsCompleted: user.testsCompleted, 
       isPremium: user.isPremium,
       isEmailVerified: user.isEmailVerified,
       freeFeedbackLeft: user.freeFeedbackLeft,
@@ -356,4 +356,90 @@ const getUserProfile = async (req, res) => {
   }
 };
 
-export { createUser, verifyOtp, resendOtp, loginUser, getCurrentUser, getUserProfile };
+const incrementTestsTaken = async (req, res) => {
+  try {
+    const userId = req.user._id;
+
+    // Find user and increment testsTaken
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { $inc: { testsTaken: 1 } },
+      { new: true, select: "testsTaken" }
+    );
+
+    if (!user) {
+      return res.status(404).json({ 
+        message: "User not found" 
+      });
+    }
+
+    return res.status(200).json({
+      message: "Test started",
+      testsTaken: user.testsTaken,
+    });
+  } catch (error) {
+    console.error("incrementTestsTaken error:", error);
+    return res.status(500).json({ 
+      message: "Server error", 
+      error: error.message 
+    });
+  }
+};
+
+const saveTestResult = async (req, res) => {
+  try {
+    // Only take what you actually use
+    const { wpm, accuracy } = req.body;
+    const userId = req.user._id;
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const previousCompleted = user.testsCompleted || 0;
+    const newCompletedCount = previousCompleted + 1;
+
+    // Safe defaults in case fields are undefined/null
+    const prevAvgWPM = user.avgWPM || 0;
+    const prevAvgAccuracy = user.avgAccuracy || 0;
+
+    const newAvgWPM =
+      (prevAvgWPM * previousCompleted + wpm) / newCompletedCount;
+    const newAvgAccuracy =
+      (prevAvgAccuracy * previousCompleted + accuracy) / newCompletedCount;
+
+    const newBestWPM = Math.max(user.bestWPM || 0, wpm);
+    const newBestAccuracy = Math.max(user.bestAccuracy || 0, accuracy);
+
+    user.testsCompleted = newCompletedCount;
+    user.avgWPM = Math.round(newAvgWPM * 100) / 100;
+    user.avgAccuracy = Math.round(newAvgAccuracy * 100) / 100;
+    user.bestWPM = newBestWPM;
+    user.bestAccuracy = newBestAccuracy;
+
+    await user.save();
+
+    return res.status(200).json({
+      message: "Test result saved successfully",
+      stats: {
+        testsTaken: user.testsTaken,
+        testsCompleted: user.testsCompleted,
+        avgWPM: user.avgWPM,
+        avgAccuracy: user.avgAccuracy,
+        bestWPM: user.bestWPM,
+        bestAccuracy: user.bestAccuracy,
+      },
+    });
+  } catch (error) {
+    console.error("saveTestResult error:", error);
+    return res.status(500).json({
+      message: "Server error",
+      error: error.message,
+    });
+  }
+};
+
+
+export { createUser, verifyOtp, resendOtp, loginUser, getCurrentUser, getUserProfile, incrementTestsTaken, saveTestResult };

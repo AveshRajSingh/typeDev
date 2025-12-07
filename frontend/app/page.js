@@ -16,9 +16,32 @@ export default function Home() {
   const [showResults, setShowResults] = useState(false);
   const [testResults, setTestResults] = useState(null);
 
-  const handleTestComplete = (stats) => {
+  const handleTestComplete = async (stats) => {
+    // Only show results and save if user actually typed something
+    if (stats.correctChars === 0 && stats.wrongChars === 0) {
+      // User didn't type anything, don't save or show results
+      return;
+    }
+
     setTestResults(stats);
     setShowResults(true);
+    
+    // Save result for authenticated users
+    if (isAuthenticated) {
+      try {
+        const { saveTestResult } = await import('./services/api');
+        await saveTestResult({
+          wpm: stats.accurateWPM,
+          accuracy: stats.accuracy,
+          rawWPM: stats.rawWPM,
+          correctChars: stats.correctChars,
+          wrongChars: stats.wrongChars,
+          timeInSeconds: timer,
+        });
+      } catch (error) {
+        console.error("Failed to save test result:", error);
+      }
+    }
   };
 
   const handleRestart = () => {
@@ -93,7 +116,11 @@ export default function Home() {
       </div>
 
       {showResults ? (
-        <Results stats={testResults} onRestart={handleRestart} />
+        <Results 
+          stats={testResults} 
+          onRestart={handleRestart}
+          isAuthenticated={isAuthenticated}
+        />
       ) : (
         <>
           {/* Typing Settings Component */}
@@ -112,6 +139,7 @@ export default function Home() {
             difficulty={difficulty}
             includeSpecialChars={includeSpecialChars}
             onComplete={handleTestComplete}
+            isAuthenticated={isAuthenticated}
           />
         </>
       )}
