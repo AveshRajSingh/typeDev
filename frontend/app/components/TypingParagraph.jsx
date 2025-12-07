@@ -16,6 +16,8 @@ const TypingParagraph = ({ timer, difficulty, includeSpecialChars, onComplete, i
   const textContainerRef = useRef(null);
   const lastScrollLine = useRef(0);
   const restartButtonRef = useRef(null);
+  const lastFetchParams = useRef({ timer: null, difficulty: null, includeSpecialChars: null });
+  const initialFetchDone = useRef(false);
 
   const fullText = paragraph.join(" ");
   const capsLockOn = useCapsLock();
@@ -93,9 +95,24 @@ const TypingParagraph = ({ timer, difficulty, includeSpecialChars, onComplete, i
     }
   }, [timer, difficulty, includeSpecialChars, resetTyping, resetTimer, customParagraph]);
 
+  // Only fetch on mount and when settings actually change
   useEffect(() => {
+    const settingsChanged = 
+      lastFetchParams.current.timer !== timer ||
+      lastFetchParams.current.difficulty !== difficulty ||
+      lastFetchParams.current.includeSpecialChars !== includeSpecialChars;
+
+    // Skip if we already have a paragraph and settings haven't changed
+    if (initialFetchDone.current && paragraph.length > 0 && !settingsChanged && !customParagraph) {
+      return;
+    }
+
+    // Update last fetch params
+    lastFetchParams.current = { timer, difficulty, includeSpecialChars };
+    initialFetchDone.current = true;
     fetchParagraph();
-  }, [timer, difficulty, includeSpecialChars]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [timer, difficulty, includeSpecialChars, customParagraph]);
 
   useEffect(() => {
     if (inputRef.current && paragraph.length > 0) {

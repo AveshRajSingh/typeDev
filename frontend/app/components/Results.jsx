@@ -134,7 +134,8 @@ const Results = ({ stats, onRestart, errorFrequencyMap, difficulty, timeInSecond
         onParagraphGenerated(response.paragraph);
       }
 
-      alert("Custom practice paragraph generated! Click 'Try Again' to practice with it.");
+      // Show success message
+      alert("Custom practice paragraph generated! Return to home to practice with it.");
 
     } catch (error) {
       setParagraphError(error.message);

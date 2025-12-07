@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useTransition } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { useUser } from "../../context/UserContext";
 import { getUserProfile } from "../../services/api";
@@ -10,6 +10,7 @@ export default function ProfilePage() {
   const router = useRouter();
   const params = useParams();
   const { user: currentUser, isAuthenticated, logout } = useUser();
+  const [isPending, startTransition] = useTransition();
   const [profileData, setProfileData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -18,6 +19,9 @@ export default function ProfilePage() {
   const isOwnProfile = currentUser?.username === username;
 
   useEffect(() => {
+    // Only fetch if we don't have data or username changed
+    if (!username) return;
+    
     const fetchProfile = async () => {
       try {
         setLoading(true);
@@ -31,14 +35,14 @@ export default function ProfilePage() {
       }
     };
 
-    if (username) {
-      fetchProfile();
-    }
+    fetchProfile();
   }, [username]);
 
   const handleLogout = () => {
     logout();
-    router.push('/');
+    startTransition(() => {
+      router.push('/');
+    });
   };
 
   if (loading) {
@@ -86,7 +90,7 @@ export default function ProfilePage() {
       <div className="max-w-6xl mx-auto">
         <div className="flex items-center justify-between mb-8">
           <button
-            onClick={() => router.push('/')}
+            onClick={() => startTransition(() => router.back())}
             className="flex items-center gap-2 px-4 py-2 rounded-lg hover:opacity-80 transition-opacity"
             style={{ backgroundColor: "var(--card)" }}
           >

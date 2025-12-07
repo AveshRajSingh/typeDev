@@ -1,20 +1,19 @@
 "use client";
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useUser } from "./context/UserContext";
 import ThemeSelector from "./components/ThemeSelector";
 import TypingSettings from "./components/TypingSettings";
 import TypingParagraph from "./components/TypingParagraph";
-import Results from "./components/Results";
+import { saveTestResults } from "./utils/testResultsStorage";
 
 export default function Home() {
   const router = useRouter();
-  const { user, isAuthenticated, logout } = useUser();
+  const { user, isAuthenticated } = useUser();
+  const [isPending, startTransition] = useTransition();
   const [timer, setTimer] = useState(30);
   const [difficulty, setDifficulty] = useState("easy");
   const [includeSpecialChars, setIncludeSpecialChars] = useState(false);
-  const [showResults, setShowResults] = useState(false);
-  const [testResults, setTestResults] = useState(null);
   const [aiGeneratedParagraph, setAiGeneratedParagraph] = useState(null);
 
   const handleTestComplete = async (stats) => {
@@ -24,10 +23,7 @@ export default function Home() {
       return;
     }
 
-    setTestResults(stats);
-    setShowResults(true);
-    
-    // Save result for authenticated users
+    // Save result for authenticated users to backend
     if (isAuthenticated) {
       try {
         const { saveTestResult } = await import('./services/api');
@@ -43,11 +39,26 @@ export default function Home() {
         console.error("Failed to save test result:", error);
       }
     }
-  };
 
-  const handleRestart = () => {
-    setShowResults(false);
-    setTestResults(null);
+    // Save to sessionStorage and navigate to results page
+    const testData = {
+      stats: {
+        correctChars: stats.correctChars,
+        wrongChars: stats.wrongChars,
+        accurateWPM: stats.accurateWPM,
+        rawWPM: stats.rawWPM,
+        accuracy: stats.accuracy,
+      },
+      errorFrequencyMap: stats.errorFrequencyMap,
+      difficulty,
+      timeInSeconds: timer,
+    };
+
+    saveTestResults(testData);
+    // Use startTransition for non-blocking navigation
+    startTransition(() => {
+      router.push('/results');
+    });
   };
 
   const handleParagraphGenerated = (paragraph) => {
@@ -56,7 +67,9 @@ export default function Home() {
 
   const handleProfileClick = () => {
     if (user?.username) {
-      router.push(`/profile/${user.username}`);
+      startTransition(() => {
+        router.push(`/profile/${user.username}`);
+      });
     }
   };
 
@@ -120,40 +133,25 @@ export default function Home() {
         <ThemeSelector />
       </div>
 
-      {showResults ? (
-        <Results 
-          stats={testResults} 
-          onRestart={handleRestart}
-          errorFrequencyMap={testResults?.errorFrequencyMap}
-          difficulty={difficulty}
-          timeInSeconds={timer}
-          user={user}
-          isAuthenticated={isAuthenticated}
-          onParagraphGenerated={handleParagraphGenerated}
-        />
-      ) : (
-        <>
-          {/* Typing Settings Component */}
-          <TypingSettings
-            timer={timer}
-            setTimer={setTimer}
-            difficulty={difficulty}
-            setDifficulty={setDifficulty}
-            includeSpecialChars={includeSpecialChars}
-            setIncludeSpecialChars={setIncludeSpecialChars}
-          />
+      {/* Typing Settings Component */}
+      <TypingSettings
+        timer={timer}
+        setTimer={setTimer}
+        difficulty={difficulty}
+        setDifficulty={setDifficulty}
+        includeSpecialChars={includeSpecialChars}
+        setIncludeSpecialChars={setIncludeSpecialChars}
+      />
 
-          {/* Typing Paragraph Component */}
-          <TypingParagraph
-            timer={timer}
-            difficulty={difficulty}
-            includeSpecialChars={includeSpecialChars}
-            onComplete={handleTestComplete}
-            isAuthenticated={isAuthenticated}
-            customParagraph={aiGeneratedParagraph}
-          />
-        </>
-      )}
+      {/* Typing Paragraph Component */}
+      <TypingParagraph
+        timer={timer}
+        difficulty={difficulty}
+        includeSpecialChars={includeSpecialChars}
+        onComplete={handleTestComplete}
+        isAuthenticated={isAuthenticated}
+        customParagraph={aiGeneratedParagraph}
+      />
     </main>
   );
 }
