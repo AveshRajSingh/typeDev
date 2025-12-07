@@ -1,9 +1,11 @@
 "use client";
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { getAIFeedback, generateAIParagraph } from "../services/api";
 
 const Results = ({ stats, onRestart, errorFrequencyMap, difficulty, timeInSeconds, user, isAuthenticated, onParagraphGenerated }) => {
   const { correctChars, wrongChars, accurateWPM, rawWPM, accuracy } = stats;
+  const router = useRouter();
   
   const [aiFeedback, setAiFeedback] = useState(null);
   const [loadingFeedback, setLoadingFeedback] = useState(false);
@@ -155,13 +157,25 @@ const Results = ({ stats, onRestart, errorFrequencyMap, difficulty, timeInSecond
 
   return (
     <div className="max-w-6xl mx-auto mt-12 px-4">
-      {/* Title */}
-      <h1
-        className="text-5xl font-bold text-center mb-12"
-        style={{ color: "var(--primary)" }}
-      >
-        Test Complete! 🎉
-      </h1>
+      {/* Header with Title and Try Again Button */}
+      <div className="flex flex-col sm:flex-row justify-between items-center mb-12 gap-4">
+        <h1
+          className="text-5xl font-bold"
+          style={{ color: "var(--primary)" }}
+        >
+          Test Complete! 🎉
+        </h1>
+        <button
+          onClick={onRestart}
+          className="px-8 py-4 rounded-xl text-lg font-bold transition-all duration-200 hover:scale-105 hover:shadow-xl"
+          style={{
+            backgroundColor: "var(--primary)",
+            color: "#ffffff",
+          }}
+        >
+          ↻ Try Again
+        </button>
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column - Main Stats */}
@@ -257,20 +271,6 @@ const Results = ({ stats, onRestart, errorFrequencyMap, difficulty, timeInSecond
               </div>
             </div>
           </div>
-
-          {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
-            <button
-              onClick={onRestart}
-              className="px-8 py-4 rounded-xl text-lg font-bold transition-all duration-200 hover:scale-105 hover:shadow-xl"
-              style={{
-                backgroundColor: "var(--primary)",
-                color: "#ffffff",
-              }}
-            >
-              ↻ Try Again
-            </button>
-          </div>
         </div>
 
         {/* Right Column - AI Features */}
@@ -309,12 +309,12 @@ const Results = ({ stats, onRestart, errorFrequencyMap, difficulty, timeInSecond
             {/* Quota Messages */}
             {feedbackQuota === 0 && !isAuthenticated && (
               <p className="text-xs text-center mb-2" style={{ color: "#ef4444" }}>
-                Free quota used. <span style={{ color: "var(--primary)", fontWeight: "bold", cursor: "pointer" }}>Sign up</span> for 20 more!
+                Free quota used. <span onClick={() => router.push('/auth')} style={{ color: "var(--primary)", fontWeight: "bold", cursor: "pointer" }}>Sign up</span> for 20 more!
               </p>
             )}
             {feedbackQuota === 0 && isAuthenticated && !user?.isPremium && (
               <p className="text-xs text-center mb-2" style={{ color: "#ef4444" }}>
-                Free quota used. <span style={{ color: "var(--primary)", fontWeight: "bold", cursor: "pointer" }}>Upgrade</span> for unlimited!
+                Free quota used. <span onClick={() => router.push('/auth')} style={{ color: "var(--primary)", fontWeight: "bold", cursor: "pointer" }}>Upgrade</span> for unlimited!
               </p>
             )}
 
@@ -359,7 +359,7 @@ const Results = ({ stats, onRestart, errorFrequencyMap, difficulty, timeInSecond
 
               {paragraphQuota === 0 && !user?.isPremium && (
                 <p className="text-xs text-center mb-2" style={{ color: "#ef4444" }}>
-                  Free quota used. <span style={{ color: "var(--primary)", fontWeight: "bold", cursor: "pointer" }}>Upgrade</span> for unlimited!
+                  Free quota used. <span onClick={() => router.push('/auth')} style={{ color: "var(--primary)", fontWeight: "bold", cursor: "pointer" }}>Upgrade</span> for unlimited!
                 </p>
               )}
 
@@ -382,7 +382,7 @@ const Results = ({ stats, onRestart, errorFrequencyMap, difficulty, timeInSecond
               <p className="text-sm mb-2" style={{ color: "var(--secondary)" }}>
                 ✨ Want custom practice paragraphs?
               </p>
-              <p className="text-xs" style={{ color: "var(--primary)", fontWeight: "bold", cursor: "pointer" }}>
+              <p onClick={() => router.push('/auth')} className="text-xs" style={{ color: "var(--primary)", fontWeight: "bold", cursor: "pointer" }}>
                 Sign up to unlock!
               </p>
             </div>
