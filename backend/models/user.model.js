@@ -76,7 +76,11 @@ import bcrypt from "bcrypt";
    
     freeFeedbackLeft: {
       type: Number,
-      default: 3, // new users get 3 free AI feedbacks
+      default: 3, // guest users get 3, logged-in users get 20 (set on registration)
+    },
+    freeParagraphGenLeft: {
+      type: Number,
+      default: 5, // logged-in users get 5 free AI paragraph generations
     },
     refreshToken : {
     type:String,

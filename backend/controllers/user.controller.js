@@ -102,6 +102,7 @@ const verifyOtp = async (req, res) => {
       }
     }
     user.isEmailVerified = true;
+    user.freeFeedbackLeft = 20; // Logged-in users get 20 free feedbacks
     await user.save();
     await Otp.deleteMany({ userId: user._id });
     res.status(200).json({ message: "Email verified successfully." });

@@ -4,7 +4,7 @@ import { getPara, startTest } from "../services/api";
 import { useTimer, useTypingState, useCapsLock } from "./hooks";
 import { StatsBar, CapsLockWarning, TypingArea, LoadingState, ErrorState } from "./ui";
 
-const TypingParagraph = ({ timer, difficulty, includeSpecialChars, onComplete, isAuthenticated }) => {
+const TypingParagraph = ({ timer, difficulty, includeSpecialChars, onComplete, isAuthenticated, customParagraph }) => {
   const [paragraph, setParagraph] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -25,7 +25,9 @@ const TypingParagraph = ({ timer, difficulty, includeSpecialChars, onComplete, i
     currentIndex, 
     typedText, 
     correctChars, 
-    wrongChars, 
+    wrongChars,
+    errorLog,
+    errorFrequencyMap, 
     correctCharsRef, 
     wrongCharsRef,
     handleBackspace,
@@ -57,9 +59,11 @@ const TypingParagraph = ({ timer, difficulty, includeSpecialChars, onComplete, i
         rawWPM: rawWPM || 0,
         accuracy,
         timeElapsed,
+        errorLog: errorLog,
+        errorFrequencyMap: errorFrequencyMap,
       });
     }
-  }, [timer, correctCharsRef, wrongCharsRef, onComplete]);
+  }, [timer, correctCharsRef, wrongCharsRef, onComplete, errorLog, errorFrequencyMap]);
 
   const { timeLeft, isStarted: isTypingStarted, start: startTimer, pause: pauseTimer, resume: resumeTimer, reset: resetTimer } = useTimer(timer, handleTestComplete);
 
@@ -74,15 +78,20 @@ const TypingParagraph = ({ timer, difficulty, includeSpecialChars, onComplete, i
     setHasIncrementedTest(false);
 
     try {
-      const response = await getPara(includeSpecialChars, "en", difficulty, timer);
-      setParagraph(response.paragraph || []);
+      // Use custom AI-generated paragraph if provided
+      if (customParagraph?.content) {
+        setParagraph(customParagraph.content);
+      } else {
+        const response = await getPara(includeSpecialChars, "en", difficulty, timer);
+        setParagraph(response.paragraph || []);
+      }
     } catch (error) {
       console.error("Failed to fetch paragraph:", error);
       setError("Failed to load paragraph. Please try again.");
     } finally {
       setLoading(false);
     }
-  }, [timer, difficulty, includeSpecialChars, resetTyping, resetTimer]);
+  }, [timer, difficulty, includeSpecialChars, resetTyping, resetTimer, customParagraph]);
 
   useEffect(() => {
     fetchParagraph();

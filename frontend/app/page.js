@@ -15,6 +15,7 @@ export default function Home() {
   const [includeSpecialChars, setIncludeSpecialChars] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [testResults, setTestResults] = useState(null);
+  const [aiGeneratedParagraph, setAiGeneratedParagraph] = useState(null);
 
   const handleTestComplete = async (stats) => {
     // Only show results and save if user actually typed something
@@ -47,6 +48,10 @@ export default function Home() {
   const handleRestart = () => {
     setShowResults(false);
     setTestResults(null);
+  };
+
+  const handleParagraphGenerated = (paragraph) => {
+    setAiGeneratedParagraph(paragraph);
   };
 
   const handleProfileClick = () => {
@@ -119,7 +124,12 @@ export default function Home() {
         <Results 
           stats={testResults} 
           onRestart={handleRestart}
+          errorFrequencyMap={testResults?.errorFrequencyMap}
+          difficulty={difficulty}
+          timeInSeconds={timer}
+          user={user}
           isAuthenticated={isAuthenticated}
+          onParagraphGenerated={handleParagraphGenerated}
         />
       ) : (
         <>
@@ -140,6 +150,7 @@ export default function Home() {
             includeSpecialChars={includeSpecialChars}
             onComplete={handleTestComplete}
             isAuthenticated={isAuthenticated}
+            customParagraph={aiGeneratedParagraph}
           />
         </>
       )}
