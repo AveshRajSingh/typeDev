@@ -20,6 +20,10 @@ import bcrypt from "bcrypt";
         required:true,
         match: [/^\S+@\S+\.\S+$/, 'Please provide a valid email address'],
     },  
+    isAdmin:{
+      type:Boolean,
+      default:false
+    },
     
     password:{
         type:String,
