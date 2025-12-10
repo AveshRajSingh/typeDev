@@ -1,11 +1,11 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { getAIFeedback, generateAIParagraph } from "../services/api";
+import { isOnline, onConnectionChange } from "../services/cacheService";
+import { navigateOffline } from "../utils/offlineNavigation";
 
 const Results = ({ stats, onRestart, errorFrequencyMap, difficulty, timeInSeconds, user, isAuthenticated, onParagraphGenerated }) => {
   const { correctChars, wrongChars, accurateWPM, rawWPM, accuracy } = stats;
-  const router = useRouter();
   
   const [aiFeedback, setAiFeedback] = useState(null);
   const [loadingFeedback, setLoadingFeedback] = useState(false);
@@ -15,6 +15,20 @@ const Results = ({ stats, onRestart, errorFrequencyMap, difficulty, timeInSecond
   const [feedbackQuota, setFeedbackQuota] = useState(null);
   const [paragraphQuota, setParagraphQuota] = useState(null);
   const [guestToken, setGuestToken] = useState(null);
+  const [offline, setOffline] = useState(!isOnline());
+
+  // Track online/offline status with live updates
+  useEffect(() => {
+    // Set initial status
+    setOffline(!isOnline());
+    
+    // Listen for connection changes
+    const cleanup = onConnectionChange((online) => {
+      setOffline(!online);
+    });
+    
+    return cleanup;
+  }, []);
 
   // Parse and format AI feedback
   const formatAIFeedback = (feedback) => {
@@ -63,6 +77,12 @@ const Results = ({ stats, onRestart, errorFrequencyMap, difficulty, timeInSecond
   }, [isAuthenticated, user]);
 
   const handleGetFeedback = async () => {
+    // Check if offline
+    if (!isOnline()) {
+      setFeedbackError("AI Feedback requires an internet connection. Please connect and try again.");
+      return;
+    }
+
     setLoadingFeedback(true);
     setFeedbackError(null);
     
@@ -92,7 +112,8 @@ const Results = ({ stats, onRestart, errorFrequencyMap, difficulty, timeInSecond
         testData,
         difficulty,
         timeInSeconds,
-        isAuthenticated ? null : tokenToUse
+        isAuthenticated ? null : tokenToUse,
+        user // Pass user for cache management
       );
 
       setAiFeedback(response.feedback);
@@ -114,6 +135,12 @@ const Results = ({ stats, onRestart, errorFrequencyMap, difficulty, timeInSecond
   const handleGenerateParagraph = async () => {
     if (!isAuthenticated) {
       setParagraphError("Please log in to generate custom paragraphs");
+      return;
+    }
+
+    // Check if offline
+    if (!isOnline()) {
+      setParagraphError("Custom paragraph generation requires an internet connection. Please connect and try again.");
       return;
     }
 
@@ -158,6 +185,21 @@ const Results = ({ stats, onRestart, errorFrequencyMap, difficulty, timeInSecond
 
   return (
     <div className="max-w-6xl mx-auto mt-12 px-4">
+      {/* Offline Warning Banner */}
+      {offline && (
+        <div
+          className="mb-6 rounded-xl p-4 text-center shadow-lg"
+          style={{
+            backgroundColor: "rgba(239, 68, 68, 0.1)",
+            border: "2px solid rgba(239, 68, 68, 0.3)",
+          }}
+        >
+          <p className="text-sm font-semibold" style={{ color: "#ef4444" }}>
+            🔴 You are offline - AI features are disabled. Results are calculated locally.
+          </p>
+        </div>
+      )}
+
       {/* Header with Title and Try Again Button */}
       <div className="flex flex-col sm:flex-row justify-between items-center mb-12 gap-4">
         <h1
@@ -310,12 +352,12 @@ const Results = ({ stats, onRestart, errorFrequencyMap, difficulty, timeInSecond
             {/* Quota Messages */}
             {feedbackQuota === 0 && !isAuthenticated && (
               <p className="text-xs text-center mb-2" style={{ color: "#ef4444" }}>
-                Free quota used. <span onClick={() => router.push('/auth')} style={{ color: "var(--primary)", fontWeight: "bold", cursor: "pointer" }}>Sign up</span> for 20 more!
+                Free quota used. <span onClick={() => navigateOffline('/auth')} style={{ color: "var(--primary)", fontWeight: "bold", cursor: "pointer" }}>Sign up</span> for 20 more!
               </p>
             )}
             {feedbackQuota === 0 && isAuthenticated && !user?.isPremium && (
               <p className="text-xs text-center mb-2" style={{ color: "#ef4444" }}>
-                Free quota used. <span onClick={() => router.push('/auth')} style={{ color: "var(--primary)", fontWeight: "bold", cursor: "pointer" }}>Upgrade</span> for unlimited!
+                Free quota used. <span onClick={() => navigateOffline('/auth')} style={{ color: "var(--primary)", fontWeight: "bold", cursor: "pointer" }}>Upgrade</span> for unlimited!
               </p>
             )}
 
@@ -360,7 +402,7 @@ const Results = ({ stats, onRestart, errorFrequencyMap, difficulty, timeInSecond
 
               {paragraphQuota === 0 && !user?.isPremium && (
                 <p className="text-xs text-center mb-2" style={{ color: "#ef4444" }}>
-                  Free quota used. <span onClick={() => router.push('/auth')} style={{ color: "var(--primary)", fontWeight: "bold", cursor: "pointer" }}>Upgrade</span> for unlimited!
+                  Free quota used. <span onClick={() => navigateOffline('/auth')} style={{ color: "var(--primary)", fontWeight: "bold", cursor: "pointer" }}>Upgrade</span> for unlimited!
                 </p>
               )}
 
@@ -383,7 +425,7 @@ const Results = ({ stats, onRestart, errorFrequencyMap, difficulty, timeInSecond
               <p className="text-sm mb-2" style={{ color: "var(--secondary)" }}>
                 ✨ Want custom practice paragraphs?
               </p>
-              <p onClick={() => router.push('/auth')} className="text-xs" style={{ color: "var(--primary)", fontWeight: "bold", cursor: "pointer" }}>
+              <p onClick={() => navigateOffline('/auth')} className="text-xs" style={{ color: "var(--primary)", fontWeight: "bold", cursor: "pointer" }}>
                 Sign up to unlock!
               </p>
             </div>

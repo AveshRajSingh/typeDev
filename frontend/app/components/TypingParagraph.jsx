@@ -3,8 +3,10 @@ import React, { useEffect, useState, useRef, useCallback } from "react";
 import { getPara, startTest } from "../services/api";
 import { useTimer, useTypingState, useCapsLock } from "./hooks";
 import { StatsBar, CapsLockWarning, TypingArea, LoadingState, ErrorState } from "./ui";
+import { useUser } from "../context/UserContext";
 
 const TypingParagraph = ({ timer, difficulty, includeSpecialChars, onComplete, isAuthenticated, customParagraph }) => {
+  const { user } = useUser();
   const [paragraph, setParagraph] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -21,6 +23,21 @@ const TypingParagraph = ({ timer, difficulty, includeSpecialChars, onComplete, i
 
   const fullText = paragraph.join(" ");
   const capsLockOn = useCapsLock();
+  
+  // Reset state and force fetch on mount (handles navigation back)
+  useEffect(() => {
+    // Force refetch when component mounts
+    if (paragraph.length === 0 && !loading) {
+      initialFetchDone.current = false;
+      lastFetchParams.current = { timer: null, difficulty: null, includeSpecialChars: null };
+    }
+    
+    return () => {
+      // Cleanup: reset everything when component unmounts
+      initialFetchDone.current = false;
+      lastFetchParams.current = { timer: null, difficulty: null, includeSpecialChars: null };
+    };
+  }, []);
   
   const typingState = useTypingState();
   const { 
@@ -83,17 +100,30 @@ const TypingParagraph = ({ timer, difficulty, includeSpecialChars, onComplete, i
       // Use custom AI-generated paragraph if provided
       if (customParagraph?.content) {
         setParagraph(customParagraph.content);
+        setLoading(false);
+        return;
+      }
+      
+      // getPara has built-in fallbacks (cache → offline generation)
+      // It should never throw, but we'll handle errors defensively
+      const response = await getPara(includeSpecialChars, "en", difficulty, timer, user);
+      
+      // Validate response has paragraph array
+      if (response && response.paragraph && Array.isArray(response.paragraph)) {
+        setParagraph(response.paragraph);
       } else {
-        const response = await getPara(includeSpecialChars, "en", difficulty, timer);
-        setParagraph(response.paragraph || []);
+        console.error("Invalid paragraph response:", response);
+        // Generate a basic fallback paragraph instead of showing error
+        setParagraph(['the', 'quick', 'brown', 'fox', 'jumps', 'over', 'the', 'lazy', 'dog']);
       }
     } catch (error) {
-      console.error("Failed to fetch paragraph:", error);
-      setError("Failed to load paragraph. Please try again.");
+      console.error("Unexpected error in fetchParagraph:", error);
+      // Never show error to user - provide fallback paragraph
+      setParagraph(['the', 'quick', 'brown', 'fox', 'jumps', 'over', 'the', 'lazy', 'dog']);
     } finally {
       setLoading(false);
     }
-  }, [timer, difficulty, includeSpecialChars, resetTyping, resetTimer, customParagraph]);
+  }, [timer, difficulty, includeSpecialChars, resetTyping, resetTimer, customParagraph, user]);
 
   // Only fetch on mount and when settings actually change
   useEffect(() => {
@@ -102,17 +132,25 @@ const TypingParagraph = ({ timer, difficulty, includeSpecialChars, onComplete, i
       lastFetchParams.current.difficulty !== difficulty ||
       lastFetchParams.current.includeSpecialChars !== includeSpecialChars;
 
-    // Skip if we already have a paragraph and settings haven't changed
-    if (initialFetchDone.current && paragraph.length > 0 && !settingsChanged && !customParagraph) {
+    // Always fetch if paragraph is empty
+    if (paragraph.length === 0) {
+      lastFetchParams.current = { timer, difficulty, includeSpecialChars };
+      initialFetchDone.current = true;
+      fetchParagraph();
       return;
     }
 
-    // Update last fetch params
+    // Skip if we already have a paragraph and settings haven't changed
+    if (initialFetchDone.current && !settingsChanged && !customParagraph) {
+      return;
+    }
+
+    // Update last fetch params and fetch
     lastFetchParams.current = { timer, difficulty, includeSpecialChars };
     initialFetchDone.current = true;
     fetchParagraph();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [timer, difficulty, includeSpecialChars, customParagraph]);
+  }, [timer, difficulty, includeSpecialChars, customParagraph, paragraph.length]);
 
   useEffect(() => {
     if (inputRef.current && paragraph.length > 0) {

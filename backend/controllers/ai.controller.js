@@ -154,6 +154,12 @@ Keep the response concise, encouraging, and actionable. Format with clear sectio
       quotaRemaining = 3 - (usedCount + 1);
     }
 
+    // Set cache headers - AI feedback can be cached as it's tied to specific test results
+    res.set({
+      'Cache-Control': 'private, max-age=604800', // Cache for 7 days (private cache only)
+      'Vary': 'Cookie',
+    });
+
     return res.status(200).json({
       success: true,
       feedback,

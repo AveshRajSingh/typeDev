@@ -1,10 +1,26 @@
 "use client";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
 import Login from "../components/auth/Login";
 import Signup from "../components/auth/Signup";
+import { isOnline, onConnectionChange } from "../services/cacheService";
+import { useOfflineRouter } from "../utils/offlineNavigation";
 
 export default function AuthPage() {
-  const router = useRouter();
+  const router = useOfflineRouter();
+  const [offline, setOffline] = useState(!isOnline());
+
+  // Track online/offline status with live updates
+  useEffect(() => {
+    // Set initial status
+    setOffline(!isOnline());
+    
+    // Listen for connection changes
+    const cleanup = onConnectionChange((online) => {
+      setOffline(!online);
+    });
+    
+    return cleanup;
+  }, []);
 
   const handleSwitchToSignup = () => {
     // Scroll to signup section or focus on it
@@ -65,6 +81,7 @@ export default function AuthPage() {
           <Login 
             onSwitchToSignup={handleSwitchToSignup} 
             onClose={handleCloseAuth}
+            disabled={offline}
           />
         </div>
 
@@ -77,7 +94,10 @@ export default function AuthPage() {
             backdropFilter: "blur(10px)",
           }}
         >
-          <Signup onSwitchToLogin={handleSwitchToLogin} />
+          <Signup 
+            onSwitchToLogin={handleSwitchToLogin}
+            disabled={offline}
+          />
         </div>
       </div>
     </main>

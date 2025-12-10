@@ -1,30 +1,32 @@
 "use client";
-import { useState, useEffect, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, useRef } from "react";
 import { useUser } from "../context/UserContext";
 import ThemeSelector from "../components/ThemeSelector";
 import Results from "../components/Results";
 import { loadTestResults, clearTestResults } from "../utils/testResultsStorage";
 import LoadingState from "../components/ui/LoadingState";
+import { useOfflineRouter, navigateOffline } from "../utils/offlineNavigation";
 
 
 
 export default function ResultsPage() {
-  const router = useRouter();
+  const router = useOfflineRouter();
   const { user, isAuthenticated } = useUser();
-  const [isPending, startTransition] = useTransition();
   const [testData, setTestData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const hasChecked = useRef(false);
 
   useEffect(() => {
+    // Prevent multiple checks
+    if (hasChecked.current) return;
+    hasChecked.current = true;
+    
     // Load test results from sessionStorage
     const results = loadTestResults();
     
     if (!results) {
-      // No results found, redirect to home
-      startTransition(() => {
-        router.push('/');
-      });
+      // No results found, redirect to home using navigateOffline to avoid router issues
+      navigateOffline('/');
       return;
     }
 
@@ -35,9 +37,7 @@ export default function ResultsPage() {
   const handleRestart = () => {
     // Clear results and go back to home
     clearTestResults();
-    startTransition(() => {
-      router.push('/');
-    });
+    router.push('/');
   };
 
   const handleParagraphGenerated = (paragraph) => {
@@ -49,9 +49,7 @@ export default function ResultsPage() {
 
   const handleProfileClick = () => {
     if (user?.username) {
-      startTransition(() => {
-        router.push(`/profile/${user.username}`);
-      });
+      router.push(`/profile/${user.username}`);
     }
   };
 

@@ -2,6 +2,9 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react'
 import { getCurrentUser, loginUser as apiLoginUser } from '../services/api'
+import { setUserId, clearUserId } from '../utils/userIdentity'
+import { clearUserCache } from '../services/cacheService'
+import { initializeCacheWarming } from '../utils/cacheWarming'
 
 const UserContext = createContext()
 
@@ -22,6 +25,14 @@ export const UserProvider = ({ children }) => {
   useEffect(() => {
     fetchCurrentUser()
   }, [])
+
+  // Initialize cache warming after user is loaded
+  useEffect(() => {
+    if (!loading) {
+      // Start cache warming in background
+      initializeCacheWarming(user)
+    }
+  }, [loading, user])
 
   const fetchCurrentUser = async () => {
     try {
@@ -44,6 +55,12 @@ export const UserProvider = ({ children }) => {
       setError(null)
       const response = await apiLoginUser(identifier, password)
       setUser(response.user)
+      
+      // Set user ID cookie for cache management
+      if (response.user?._id) {
+        setUserId(`auth_${response.user._id}`)
+      }
+      
       return { success: true, data: response }
     } catch (err) {
       setError(err.message)
@@ -53,11 +70,23 @@ export const UserProvider = ({ children }) => {
     }
   }
 
-  const logout = () => {
+  const logout = async () => {
+    // Clear user state
     setUser(null)
     setError(null)
-    // Clear cookies by calling logout endpoint (you can add this later)
-    // For now, just clear the user state
+    
+    // Clear user identity cookie
+    clearUserId()
+    
+    // Clear user's cache
+    try {
+      await clearUserCache(user)
+      console.log('🗑️ Cleared user cache on logout')
+    } catch (error) {
+      console.error('Failed to clear cache on logout:', error)
+    }
+    
+    // TODO: Call backend logout endpoint to clear cookies
   }
 
   const updateUser = (userData) => {

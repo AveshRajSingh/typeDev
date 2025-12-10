@@ -1,16 +1,17 @@
 "use client";
-import { useState, useEffect, useTransition } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useParams } from "next/navigation";
 import { useUser } from "../../context/UserContext";
 import { getUserProfile } from "../../services/api";
 import LoadingState from "../../components/ui/LoadingState";
 import ErrorState from "../../components/ui/ErrorState";
+import CacheManager from "../../components/CacheManager";
+import { useOfflineRouter } from "../../utils/offlineNavigation";
 
 export default function ProfilePage() {
-  const router = useRouter();
+  const router = useOfflineRouter();
   const params = useParams();
   const { user: currentUser, isAuthenticated, logout } = useUser();
-  const [isPending, startTransition] = useTransition();
   const [profileData, setProfileData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -40,9 +41,7 @@ export default function ProfilePage() {
 
   const handleLogout = () => {
     logout();
-    startTransition(() => {
-      router.push('/');
-    });
+    router.push('/');
   };
 
   if (loading) {
@@ -201,6 +200,13 @@ export default function ProfilePage() {
             </div>
           </div>
         </div>
+
+        {/* Cache Manager - Only for own profile */}
+        {isOwnProfile && (
+          <div className="mt-8">
+            <CacheManager user={currentUser} />
+          </div>
+        )}
       </div>
     </main>
   );

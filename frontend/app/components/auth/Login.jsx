@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { useUser } from "../../context/UserContext";
 
-const Login = ({ onSwitchToSignup, onClose }) => {
+const Login = ({ onSwitchToSignup, onClose, disabled = false }) => {
   const { login, loading } = useUser();
   const [formData, setFormData] = useState({
     usernameOrEmail: "",
@@ -164,14 +164,14 @@ const Login = ({ onSwitchToSignup, onClose }) => {
 
         <button
           type="submit"
-          disabled={loading}
+          disabled={loading || disabled}
           className="w-full py-2.5 px-4 rounded-lg font-semibold transition-all duration-200 hover:brightness-90 active:brightness-75 disabled:opacity-50 disabled:cursor-not-allowed"
           style={{
             backgroundColor: "var(--primary)",
             color: "#ffffff",
           }}
         >
-          {loading ? "Signing In..." : "Sign In"}
+          {loading ? "Signing In..." : disabled ? "Offline - Sign In Disabled" : "Sign In"}
         </button>
       </form>
 

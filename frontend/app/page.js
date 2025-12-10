@@ -1,16 +1,16 @@
 "use client";
-import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { useUser } from "./context/UserContext";
 import ThemeSelector from "./components/ThemeSelector";
 import TypingSettings from "./components/TypingSettings";
 import TypingParagraph from "./components/TypingParagraph";
 import { saveTestResults } from "./utils/testResultsStorage";
+import { isOnline } from "./services/cacheService";
+import { useOfflineRouter } from "./utils/offlineNavigation";
 
 export default function Home() {
-  const router = useRouter();
+  const router = useOfflineRouter();
   const { user, isAuthenticated } = useUser();
-  const [isPending, startTransition] = useTransition();
   const [timer, setTimer] = useState(30);
   const [difficulty, setDifficulty] = useState("easy");
   const [includeSpecialChars, setIncludeSpecialChars] = useState(false);
@@ -24,7 +24,7 @@ export default function Home() {
     }
 
     // Save result for authenticated users to backend
-    if (isAuthenticated) {
+    if (isAuthenticated && isOnline()) {
       try {
         const { saveTestResult } = await import('./services/api');
         await saveTestResult({
@@ -37,7 +37,10 @@ export default function Home() {
         });
       } catch (error) {
         console.error("Failed to save test result:", error);
+        // Continue to results page even if save fails
       }
+    } else if (isAuthenticated && !isOnline()) {
+      console.warn("⚠️ Offline - Test result will not be saved to server");
     }
 
     // Save to sessionStorage and navigate to results page
@@ -55,10 +58,7 @@ export default function Home() {
     };
 
     saveTestResults(testData);
-    // Use startTransition for non-blocking navigation
-    startTransition(() => {
-      router.push('/results');
-    });
+    router.push('/results');
   };
 
   const handleParagraphGenerated = (paragraph) => {
@@ -67,9 +67,7 @@ export default function Home() {
 
   const handleProfileClick = () => {
     if (user?.username) {
-      startTransition(() => {
-        router.push(`/profile/${user.username}`);
-      });
+      router.push(`/profile/${user.username}`);
     }
   };
 

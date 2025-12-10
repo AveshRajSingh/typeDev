@@ -2,7 +2,7 @@
 import React, { useState } from 'react'
 import { signupUser, verifyOtp, resendOtp } from '../../services/api'
 
-const Signup = ({ onSwitchToLogin }) => {
+const Signup = ({ onSwitchToLogin, disabled = false }) => {
   const [formData, setFormData] = useState({
     username: '',
     email: '',
@@ -287,14 +287,14 @@ const Signup = ({ onSwitchToLogin }) => {
 
         <button
           type='submit'
-          disabled={loading}
+          disabled={loading || disabled}
           className='w-full py-2.5 px-4 rounded-lg font-semibold transition-all duration-200 hover:brightness-90 active:brightness-75 disabled:opacity-50 disabled:cursor-not-allowed'
           style={{ 
             backgroundColor: 'var(--primary)',
             color: '#ffffff'
           }}
         >
-          {loading ? 'Creating Account...' : 'Create Account'}
+          {loading ? 'Creating Account...' : disabled ? 'Offline - Sign Up Disabled' : 'Create Account'}
         </button>
       </form>
       ) : (
@@ -340,20 +340,20 @@ const Signup = ({ onSwitchToLogin }) => {
 
           <button
             type='submit'
-            disabled={loading}
+            disabled={loading || disabled}
             className='w-full py-2.5 px-4 rounded-lg font-semibold transition-all duration-200 hover:brightness-90 active:brightness-75 disabled:opacity-50 disabled:cursor-not-allowed'
             style={{ 
               backgroundColor: 'var(--primary)',
               color: '#ffffff'
             }}
           >
-            {loading ? 'Verifying...' : 'Verify OTP'}
+            {loading ? 'Verifying...' : disabled ? 'Offline - Verify Disabled' : 'Verify OTP'}
           </button>
 
           <button
             type='button'
             onClick={handleResendOtp}
-            disabled={resendLoading}
+            disabled={resendLoading || disabled}
             className='w-full py-2 px-4 rounded-lg font-medium transition-all duration-200 hover:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed'
             style={{ 
               backgroundColor: 'transparent',
@@ -361,7 +361,7 @@ const Signup = ({ onSwitchToLogin }) => {
               border: '1px solid var(--primary)'
             }}
           >
-            {resendLoading ? 'Resending...' : 'Resend OTP'}
+            {resendLoading ? 'Resending...' : disabled ? 'Offline - Resend Disabled' : 'Resend OTP'}
           </button>
         </form>
       )}

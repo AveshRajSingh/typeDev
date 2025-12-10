@@ -373,6 +373,14 @@ const getPara = async (req, res) => {
         const randomIndex = Math.floor(Math.random() * para.content.length);
         wordsToSend.push(para.content[randomIndex]);
     }
+    
+    // Set cache headers - paragraphs are static content that rarely changes
+    res.set({
+      'Cache-Control': 'public, max-age=3600', // Cache for 1 hour
+      'ETag': `"para-${difficultyLevel}-${isSpecialCharIncluded}-${language}"`,
+      'Vary': 'Accept-Encoding',
+    });
+    
     return res.status(200).json({ paragraph: wordsToSend , message: "Paragraph fetched successfully" });
   } catch (error) {
     return res

@@ -332,6 +332,13 @@ const getUserProfile = async (req, res) => {
       });
     }
 
+    // Set cache headers for profile data
+    res.set({
+      'Cache-Control': 'private, max-age=300', // Cache for 5 minutes
+      'ETag': `"profile-${username}-${user.updatedAt.getTime()}"`,
+      'Vary': 'Cookie',
+    });
+
     // Return user profile with statistics
     return res.status(200).json({
       message: "Profile fetched successfully",
