@@ -22,7 +22,8 @@ import bcrypt from "bcrypt";
     },  
     isAdmin:{
       type:Boolean,
-      default:false
+      default:false,
+      index:true
     },
     
     password:{

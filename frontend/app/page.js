@@ -4,6 +4,7 @@ import { useUser } from "./context/UserContext";
 import ThemeSelector from "./components/ThemeSelector";
 import TypingSettings from "./components/TypingSettings";
 import TypingParagraph from "./components/TypingParagraph";
+import PremiumPlans from "./components/PremiumPlans";
 import { saveTestResults } from "./utils/testResultsStorage";
 import { isOnline } from "./services/cacheService";
 import { useOfflineRouter } from "./utils/offlineNavigation";
@@ -150,6 +151,9 @@ export default function Home() {
         isAuthenticated={isAuthenticated}
         customParagraph={aiGeneratedParagraph}
       />
+
+      {/* Premium Plans Section */}
+      <PremiumPlans />
     </main>
   );
 }

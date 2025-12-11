@@ -8,6 +8,8 @@ import { initializeCacheWarming } from '../utils/cacheWarming'
 
 const UserContext = createContext()
 
+export { UserContext }
+
 export const useUser = () => {
   const context = useContext(UserContext)
   if (!context) {

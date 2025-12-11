@@ -291,15 +291,164 @@ const generateAIParagraph = async (errorFrequencyMap, wordCount = 50, difficulty
 /**
  * Invalidate cached data on user actions
  */
-export const invalidateUserCache = async (user = null) => {
+const invalidateUserCache = async (user = null) => {
   console.log('🗑️ Invalidating user-related cache...');
   await invalidateCache('current_user', user);
   await invalidateCache(/^profile_/, user);
 };
 
-export const invalidateParagraphCache = async (user = null) => {
+const invalidateParagraphCache = async (user = null) => {
   console.log('🗑️ Invalidating paragraph cache...');
   await invalidateCache(/^para_/, user);
+};
+
+/**
+ * Payment API Functions
+ */
+
+// Create new payment order
+const createOrder = async (planType) => {
+  try {
+    const response = await api.post('/payment/create-order', { planType });
+    return response.data;
+  } catch (error) {
+    const errorMessage = error.response?.data?.message || "Failed to create order";
+    console.error("Create order error:", errorMessage);
+    throw new Error(errorMessage);
+  }
+};
+
+// Submit payment transaction
+const submitTransaction = async (orderId, upiTransactionId, screenshot = null) => {
+  try {
+    const formData = new FormData();
+    formData.append('orderId', orderId);
+    formData.append('upiTransactionId', upiTransactionId);
+    
+    if (screenshot) {
+      formData.append('screenshot', screenshot);
+    }
+    
+    const response = await api.post('/payment/submit-transaction', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+    
+    // Invalidate user cache to refresh premium status
+    await invalidateUserCache();
+    
+    return response.data;
+  } catch (error) {
+    const errorMessage = error.response?.data?.message || "Failed to submit transaction";
+    console.error("Submit transaction error:", errorMessage);
+    throw new Error(errorMessage);
+  }
+};
+
+// Get order status
+const getOrderStatus = async (orderId) => {
+  try {
+    const response = await api.get(`/payment/order-status/${orderId}`);
+    return response.data;
+  } catch (error) {
+    const errorMessage = error.response?.data?.message || "Failed to get order status";
+    console.error("Get order status error:", errorMessage);
+    throw new Error(errorMessage);
+  }
+};
+
+// Get user's payment history
+const getMyOrders = async (page = 1, limit = 10) => {
+  try {
+    const response = await api.get('/payment/my-orders', {
+      params: { page, limit }
+    });
+    return response.data;
+  } catch (error) {
+    const errorMessage = error.response?.data?.message || "Failed to get orders";
+    console.error("Get my orders error:", errorMessage);
+    throw new Error(errorMessage);
+  }
+};
+
+// Admin: Get pending orders
+const getPendingOrders = async (status = 'submitted', page = 1, limit = 20) => {
+  try {
+    const response = await api.get('/payment/pending-orders', {
+      params: { status, page, limit }
+    });
+    return response.data;
+  } catch (error) {
+    const errorMessage = error.response?.data?.message || "Failed to get pending orders";
+    console.error("Get pending orders error:", errorMessage);
+    throw new Error(errorMessage);
+  }
+};
+
+// Admin: Verify order
+const verifyOrder = async (orderId, action, notes = '') => {
+  try {
+    const response = await api.patch(`/payment/verify/${orderId}`, {
+      action,
+      notes
+    });
+    
+    return response.data;
+  } catch (error) {
+    const errorMessage = error.response?.data?.message || "Failed to verify order";
+    console.error("Verify order error:", errorMessage);
+    throw new Error(errorMessage);
+  }
+};
+
+// Admin: Reconcile bank statement
+const reconcilePayments = async (csvFile) => {
+  try {
+    const formData = new FormData();
+    formData.append('csvFile', csvFile);
+    
+    const response = await api.post('/payment/reconcile', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+    
+    return response.data;
+  } catch (error) {
+    const errorMessage = error.response?.data?.message || "Failed to reconcile payments";
+    console.error("Reconcile payments error:", errorMessage);
+    throw new Error(errorMessage);
+  }
+};
+
+// Admin: Get notifications
+const getNotifications = async (isRead = null, limit = 20) => {
+  try {
+    const params = { limit };
+    if (isRead !== null) {
+      params.isRead = isRead;
+    }
+    
+    const response = await api.get('/payment/notifications', { params });
+    return response.data;
+  } catch (error) {
+    const errorMessage = error.response?.data?.message || "Failed to get notifications";
+    console.error("Get notifications error:", errorMessage);
+    throw new Error(errorMessage);
+  }
+};
+
+// Admin: Mark notification as read
+const markNotificationRead = async (notificationId) => {
+  try {
+    const response = await api.patch(`/payment/notifications/${notificationId}/read`);
+    return response.data;
+  } catch (error) {
+    const errorMessage = error.response?.data?.message || "Failed to mark notification as read";
+    console.error("Mark notification read error:", errorMessage);
+    throw new Error(errorMessage);
+  }
 };
 
 export { 
@@ -314,4 +463,15 @@ export {
   startTest,
   getAIFeedback,
   generateAIParagraph,
+  invalidateUserCache,
+  invalidateParagraphCache,
+  createOrder,
+  submitTransaction,
+  getOrderStatus,
+  getMyOrders,
+  getPendingOrders,
+  verifyOrder,
+  reconcilePayments,
+  getNotifications,
+  markNotificationRead,
 };

@@ -1,5 +1,5 @@
 // Service Worker for Offline Support
-const CACHE_VERSION = 'typedev-v1';
+const CACHE_VERSION = 'typedev-v2';
 const PAGES_CACHE = `${CACHE_VERSION}-pages`;
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const API_CACHE = `${CACHE_VERSION}-api`;

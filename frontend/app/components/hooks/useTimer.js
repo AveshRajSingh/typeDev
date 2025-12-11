@@ -47,7 +47,7 @@ export const useTimer = (initialTime, onComplete) => {
 
   const start = () => {
     setIsStarted(true);
-    setIsPaused(false); // Ensure timer is not paused when starting
+  setIsPaused(false); // Ensure timer is not paused when starting
   };
   
   const pause = () => setIsPaused(true);

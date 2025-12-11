@@ -1,16 +1,35 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-  --primary: #f59e0b;
-  --primaryHover: #d97706;
-  --secondary: #64748b;
-  --border: #e5e7eb;
-  --input: #f9fafb;
-  --inputBorder: #d1d5db;
+  /* Default to light theme - matches ThemeContext light theme */
+  --background: #fafafa;
+  --foreground: #1a1a1a;
+  --primary: #2563eb;
+  --primaryHover: #1d4ed8;
+  --primary-dark: #1d4ed8;
+  --secondary: #71717a;
+  --secondary-bg: #f4f4f5;
+  --border: #e4e4e7;
+  --input: #f4f4f5;
+  --inputBorder: #d4d4d8;
   --card: #ffffff;
-  --cardBorder: #e5e7eb;
+  --card-bg: #ffffff;
+  --cardBorder: #e4e4e7;
+  --qr-bg: #ffffff;
+  
+  /* Status colors */
+  --success: #10b981;
+  --success-bg: #d1fae5;
+  --success-text: #065f46;
+  --warning-bg: #fef3c7;
+  --warning-border: #fde68a;
+  --warning-text: #92400e;
+  --error-bg: #fee2e2;
+  --error-border: #fecaca;
+  --error-text: #991b1b;
+  --info-bg: #dbeafe;
+  --info-border: #bfdbfe;
+  --info-text: #1e40af;
 }
 
 @theme inline {

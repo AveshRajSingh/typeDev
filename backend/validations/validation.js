@@ -79,3 +79,34 @@ export const saveTestResultSchema = yup.object({
     .required("Time in seconds is required")
     .min(1, "Time must be at least 1 second"),
 });
+
+// Payment validation schemas
+export const createOrderSchema = yup.object({
+  planType: yup
+    .string()
+    .required("Plan type is required")
+    .oneOf(["monthly", "yearly", "lifetime"], "Invalid plan type")
+});
+
+export const submitTransactionSchema = yup.object({
+  orderId: yup
+    .string()
+    .required("Order ID is required")
+    .matches(/^[0-9a-fA-F]{24}$/, "Invalid order ID format"),
+  upiTransactionId: yup
+    .string()
+    .required("UPI transaction ID is required")
+    .matches(/^\d{12}$/, "UPI transaction ID must be 12 digits")
+    .trim()
+});
+
+export const verifyOrderSchema = yup.object({
+  action: yup
+    .string()
+    .required("Action is required")
+    .oneOf(["approve", "reject"], "Action must be 'approve' or 'reject'"),
+  notes: yup
+    .string()
+    .optional()
+    .max(500, "Notes cannot exceed 500 characters")
+});

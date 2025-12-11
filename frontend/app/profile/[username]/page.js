@@ -2,19 +2,37 @@
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { useUser } from "../../context/UserContext";
-import { getUserProfile } from "../../services/api";
+import { getUserProfile, getMyOrders } from "../../services/api";
 import LoadingState from "../../components/ui/LoadingState";
 import ErrorState from "../../components/ui/ErrorState";
 import CacheManager from "../../components/CacheManager";
 import { useOfflineRouter } from "../../utils/offlineNavigation";
+
+const STATUS_COLORS = {
+  pending: "bg-yellow-100 text-yellow-800",
+  submitted: "bg-blue-100 text-blue-800",
+  verified: "bg-green-100 text-green-800",
+  expired: "bg-red-100 text-red-800",
+  failed: "bg-red-100 text-red-800"
+};
+
+const STATUS_LABELS = {
+  pending: "Pending",
+  submitted: "Verifying",
+  verified: "Completed",
+  expired: "Expired",
+  failed: "Failed"
+};
 
 export default function ProfilePage() {
   const router = useOfflineRouter();
   const params = useParams();
   const { user: currentUser, isAuthenticated, logout } = useUser();
   const [profileData, setProfileData] = useState(null);
+  const [paymentHistory, setPaymentHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [loadingPayments, setLoadingPayments] = useState(false);
 
   const username = params.username;
   const isOwnProfile = currentUser?.username === username;
@@ -37,7 +55,24 @@ export default function ProfilePage() {
     };
 
     fetchProfile();
-  }, [username]);
+    
+    // Fetch payment history if it's user's own profile
+    if (isOwnProfile && isAuthenticated) {
+      fetchPaymentHistory();
+    }
+  }, [username, isOwnProfile, isAuthenticated]);
+
+  const fetchPaymentHistory = async () => {
+    try {
+      setLoadingPayments(true);
+      const response = await getMyOrders(1, 10);
+      setPaymentHistory(response.data.orders);
+    } catch (err) {
+      console.error("Failed to load payment history:", err);
+    } finally {
+      setLoadingPayments(false);
+    }
+  };
 
   const handleLogout = () => {
     logout();
@@ -200,6 +235,93 @@ export default function ProfilePage() {
             </div>
           </div>
         </div>
+
+        {/* Payment History - Only for own profile */}
+        {isOwnProfile && isAuthenticated && (
+          <div
+            className="rounded-2xl p-8 mt-8 shadow-lg"
+            style={{ backgroundColor: "var(--card)" }}
+          >
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold">Payment History</h2>
+              <button
+                onClick={() => router.push("/premium")}
+                className="px-4 py-2 rounded-lg hover:opacity-80 transition-opacity text-white font-medium"
+                style={{ backgroundColor: "var(--primary)" }}
+              >
+                Upgrade to Premium
+              </button>
+            </div>
+
+            {loadingPayments ? (
+              <div className="text-center py-8">
+                <p className="opacity-70">Loading payment history...</p>
+              </div>
+            ) : paymentHistory.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="opacity-70 mb-4">No payment history yet</p>
+                <button
+                  onClick={() => router.push("/premium")}
+                  className="px-6 py-3 rounded-lg hover:opacity-80 transition-opacity text-white font-medium"
+                  style={{ backgroundColor: "var(--primary)" }}
+                >
+                  Get Premium Now
+                </button>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b" style={{ borderColor: "var(--border)" }}>
+                      <th className="text-left py-3 px-4 font-medium opacity-70">Date</th>
+                      <th className="text-left py-3 px-4 font-medium opacity-70">Plan</th>
+                      <th className="text-left py-3 px-4 font-medium opacity-70">Amount</th>
+                      <th className="text-left py-3 px-4 font-medium opacity-70">Status</th>
+                      <th className="text-left py-3 px-4 font-medium opacity-70">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {paymentHistory.map((order) => (
+                      <tr
+                        key={order._id}
+                        className="border-b hover:bg-opacity-50"
+                        style={{ borderColor: "var(--border)" }}
+                      >
+                        <td className="py-3 px-4">
+                          {new Date(order.createdAt).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric',
+                          })}
+                        </td>
+                        <td className="py-3 px-4">
+                          <span className="capitalize font-medium">{order.planType}</span>
+                        </td>
+                        <td className="py-3 px-4">
+                          <span className="font-semibold">₹{order.uniqueAmount || order.baseAmount}</span>
+                        </td>
+                        <td className="py-3 px-4">
+                          <span className={`px-3 py-1 rounded-full text-xs font-medium ${STATUS_COLORS[order.status]}`}>
+                            {STATUS_LABELS[order.status]}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4">
+                          <button
+                            onClick={() => router.push(`/payment-status/${order._id}`)}
+                            className="text-sm hover:opacity-70 transition-opacity"
+                            style={{ color: "var(--primary)" }}
+                          >
+                            View Details →
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Cache Manager - Only for own profile */}
         {isOwnProfile && (
