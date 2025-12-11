@@ -11,6 +11,11 @@ const UPI_CONFIG = {
 
 // Plan Configuration
 export const PLAN_CONFIG = {
+  test: {
+    amount: 2,
+    durationDays: 1,
+    label: "Test Plan"
+  },
   monthly: {
     amount: 69,
     durationDays: 30,

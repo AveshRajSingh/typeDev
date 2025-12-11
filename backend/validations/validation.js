@@ -85,7 +85,7 @@ export const createOrderSchema = yup.object({
   planType: yup
     .string()
     .required("Plan type is required")
-    .oneOf(["monthly", "yearly", "lifetime"], "Invalid plan type")
+    .oneOf(["test", "monthly", "yearly", "lifetime"], "Invalid plan type")
 });
 
 export const submitTransactionSchema = yup.object({

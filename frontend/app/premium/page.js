@@ -7,6 +7,20 @@ import { createOrder, getMyOrders } from "../services/payment.api";
 
 const PLANS = [
   {
+    type: "test",
+    name: "Test Plan",
+    price: 2,
+    duration: "1 day",
+    features: [
+      "Testing payment flow",
+      "1 day access",
+      "Limited features",
+      "For development testing only"
+    ],
+    badge: "TEST",
+    color: "orange"
+  },
+  {
     type: "monthly",
     name: "Monthly Premium",
     price: 69,
@@ -55,19 +69,31 @@ const PLANS = [
 
 export default function PremiumPage() {
   const router = useRouter();
-  const { user, isAuthenticated } = useUser();
+  const { user, isAuthenticated, loading: userLoading } = useUser();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [orderData, setOrderData] = useState(null);
   const [timeRemaining, setTimeRemaining] = useState(null);
 
-  // Redirect if not logged in
+  // Redirect if not logged in (only after loading completes)
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!userLoading && !isAuthenticated) {
       router.push("/auth?redirect=/premium");
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, userLoading, router]);
+
+  // Show loading state while checking authentication
+  if (userLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "var(--background)" }}>
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-solid border-current border-r-transparent" style={{ color: "var(--primary)" }}></div>
+          <p className="mt-4" style={{ color: "var(--foreground)" }}>Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   // Fetch pending order on mount
   useEffect(() => {

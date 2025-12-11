@@ -32,7 +32,7 @@ export const createOrder = async (req, res) => {
     if (!PLAN_CONFIG[planType]) {
       return res.status(400).json({
         message: "Invalid plan type",
-        error: "Plan must be one of: monthly, yearly, lifetime"
+        error: "Plan must be one of: test, monthly, yearly, lifetime"
       });
     }
     

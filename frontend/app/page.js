@@ -84,6 +84,15 @@ export default function Home() {
         {isAuthenticated && user ? (
           <>
             <button
+              onClick={() => router.push('/premium')}
+              className="px-4 py-2 rounded-full hover:opacity-80 transition-opacity font-semibold text-white"
+              style={{ backgroundColor: "var(--primary)" }}
+              aria-label="View premium plans"
+              title="Premium Plans"
+            >
+              ⭐ Premium
+            </button>
+            <button
               onClick={handleProfileClick}
               className="p-2 rounded-full hover:opacity-80 transition-opacity"
               style={{ backgroundColor: "var(--primary)" }}

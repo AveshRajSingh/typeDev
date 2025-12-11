@@ -7,6 +7,20 @@ import { createOrder } from "../services/payment.api";
 
 const PLANS = [
   {
+    type: "test",
+    name: "Test Plan",
+    price: 2,
+    duration: "1 day",
+    features: [
+      "Testing payment flow",
+      "1 day access",
+      "Limited features",
+      "For development testing only"
+    ],
+    badge: "TEST",
+    color: "orange"
+  },
+  {
     type: "monthly",
     name: "Monthly Premium",
     price: 69,
