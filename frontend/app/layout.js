@@ -5,7 +5,6 @@ import { UserProvider } from "./context/UserContext";
 import OnlineStatusIndicator from "./components/OnlineStatusIndicator";
 import CacheWarmer from "./components/CacheWarmer";
 import ServiceWorkerInit from "./components/ServiceWorkerInit";
-import DevCacheClearButton from "./components/DevCacheClearButton";
 
 const inter = Inter({
   variable: "--font-geist-sans",
@@ -70,7 +69,6 @@ export default function RootLayout({ children }) {
             <ServiceWorkerInit />
             <OnlineStatusIndicator />
             <CacheWarmer />
-            <DevCacheClearButton />
             {children}
           </UserProvider>
         </ThemeProvider>

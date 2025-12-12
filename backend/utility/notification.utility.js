@@ -7,16 +7,20 @@ import { transporter } from "./transportar.utility.js";
 let telegramBot = null;
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const TELEGRAM_ADMIN_CHAT_ID = process.env.TELEGRAM_ADMIN_CHAT_ID;
+const IS_TELEGRAM_ENABLED = TELEGRAM_BOT_TOKEN && TELEGRAM_ADMIN_CHAT_ID;
 
-if (TELEGRAM_BOT_TOKEN && TELEGRAM_ADMIN_CHAT_ID) {
+if (IS_TELEGRAM_ENABLED) {
   try {
     telegramBot = new TelegramBot(TELEGRAM_BOT_TOKEN, { polling: false });
     console.log("✅ Telegram Bot initialized");
   } catch (error) {
     console.warn("⚠️  Telegram Bot initialization failed:", error.message);
+    telegramBot = null; // Ensure it's null on failure
   }
 } else {
-  console.warn("⚠️  Telegram credentials not provided. Telegram notifications disabled.");
+  if (process.env.NODE_ENV === 'development') {
+    console.log("ℹ️  Telegram notifications disabled (dev mode)");
+  }
 }
 
 /**
@@ -45,13 +49,15 @@ export const sendAdminNotification = async (type, data) => {
     notifications.push({ channel: "email", success: false, error: error.message });
   }
   
-  try {
-    // 3. Send Telegram notification
-    const telegramResult = await sendTelegramNotification(type, data);
-    notifications.push({ channel: "telegram", success: true, data: telegramResult });
-  } catch (error) {
-    console.warn("⚠️  Telegram notification failed:", error.message);
-    notifications.push({ channel: "telegram", success: false, error: error.message });
+  // 3. Send Telegram notification (only if enabled)
+  if (IS_TELEGRAM_ENABLED && telegramBot) {
+    try {
+      const telegramResult = await sendTelegramNotification(type, data);
+      notifications.push({ channel: "telegram", success: true, data: telegramResult });
+    } catch (error) {
+      console.warn("⚠️  Telegram notification failed:", error.message);
+      notifications.push({ channel: "telegram", success: false, error: error.message });
+    }
   }
   
   return notifications;

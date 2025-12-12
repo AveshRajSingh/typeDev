@@ -172,7 +172,7 @@ export default function PaymentStatusPage() {
   const statusInfo = STATUS_CONFIG[order.status] || STATUS_CONFIG.pending;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 py-12 px-4">
+    <div className="min-h-screen bg-linear-to-br from-blue-50 to-purple-50 py-12 px-4">
       <div className="max-w-3xl mx-auto">
         {/* Status Card */}
         <div className="bg-white rounded-2xl shadow-xl p-8 mb-6">
@@ -328,7 +328,7 @@ export default function PaymentStatusPage() {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold py-4 rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full bg-linear-to-r from-blue-600 to-purple-600 text-white font-bold py-4 rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {submitting ? (
                     <span className="flex items-center justify-center">

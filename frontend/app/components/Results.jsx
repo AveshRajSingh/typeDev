@@ -156,13 +156,11 @@ const Results = ({ stats, onRestart, errorFrequencyMap, difficulty, timeInSecond
 
       setParagraphQuota(response.quotaRemaining);
       
-      // Pass generated paragraph back to parent
-      if (onParagraphGenerated) {
-        onParagraphGenerated(response.paragraph);
-      }
-
-      // Show success message
-      alert("Custom practice paragraph generated! Return to home to practice with it.");
+      // Store the generated paragraph in sessionStorage for homepage to use
+      sessionStorage.setItem('aiGeneratedParagraph', JSON.stringify(response.paragraph));
+      
+      // Navigate directly to homepage to start typing
+      navigateOffline('/');
 
     } catch (error) {
       setParagraphError(error.message);

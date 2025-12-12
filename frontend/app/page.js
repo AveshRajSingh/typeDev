@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useUser } from "./context/UserContext";
 import ThemeSelector from "./components/ThemeSelector";
 import TypingSettings from "./components/TypingSettings";
@@ -16,6 +16,21 @@ export default function Home() {
   const [difficulty, setDifficulty] = useState("easy");
   const [includeSpecialChars, setIncludeSpecialChars] = useState(false);
   const [aiGeneratedParagraph, setAiGeneratedParagraph] = useState(null);
+
+  // Check for AI generated paragraph in sessionStorage on mount
+  useEffect(() => {
+    const storedParagraph = sessionStorage.getItem('aiGeneratedParagraph');
+    if (storedParagraph) {
+      try {
+        const paragraph = JSON.parse(storedParagraph);
+        setAiGeneratedParagraph(paragraph);
+        // Clear it so it's only used once
+        sessionStorage.removeItem('aiGeneratedParagraph');
+      } catch (error) {
+        console.error('Error parsing stored paragraph:', error);
+      }
+    }
+  }, []);
 
   const handleTestComplete = async (stats) => {
     // Only show results and save if user actually typed something
@@ -95,35 +110,13 @@ export default function Home() {
               </button>
             )}
             <button
-              onClick={() => router.push('/premium')}
-              className="px-4 py-2 rounded-full hover:opacity-80 transition-opacity font-semibold text-white"
-              style={{ backgroundColor: "var(--primary)" }}
-              aria-label="View premium plans"
-              title="Premium Plans"
-            >
-              ⭐ Premium
-            </button>
-            <button
               onClick={handleProfileClick}
-              className="p-2 rounded-full hover:opacity-80 transition-opacity"
+              className="w-10 h-10 rounded-full hover:opacity-80 transition-opacity flex items-center justify-center font-bold text-white text-lg"
               style={{ backgroundColor: "var(--primary)" }}
               aria-label="View profile"
               title="View Profile"
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={2}
-                stroke="white"
-                className="w-6 h-6"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"
-                />
-              </svg>
+              {user.username ? user.username.charAt(0).toUpperCase() : 'U'}
             </button>
           </>
         ) : (
@@ -172,7 +165,7 @@ export default function Home() {
         customParagraph={aiGeneratedParagraph}
       />
 
-      {/* Premium Plans Section */}
+      {/* Premium Plans - Show on homepage */}
       <PremiumPlans />
     </main>
   );

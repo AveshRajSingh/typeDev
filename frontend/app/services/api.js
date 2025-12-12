@@ -3,7 +3,10 @@ import { getCachedData, setCachedData, invalidateCache, isOnline } from './cache
 import { getUserId } from '../utils/userIdentity';
 import { generateOfflineParagraph } from '../utils/offlineCalculations';
 
-const BASE_URL = "http://localhost:5000";
+// Use environment variable for API URL, fallback to localhost for development
+const BASE_URL = typeof window !== 'undefined' 
+  ? (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000")
+  : (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000");
 
 // Cache TTL configurations (in milliseconds)
 const CACHE_TTL = {
@@ -22,6 +25,32 @@ const api = axios.create({
   },
 });
 
+/**
+ * Shuffle array to create random variations from cached paragraph
+ * Fisher-Yates shuffle algorithm - O(n) time complexity
+ */
+const shuffleArray = (array) => {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+};
+
+/**
+ * Create random paragraph variation from cached data
+ * Shuffles words to provide fresh content without server request
+ */
+const createRandomVariation = (cachedData) => {
+  if (!cachedData || !cachedData.paragraph) return null;
+  
+  return {
+    ...cachedData,
+    paragraph: shuffleArray(cachedData.paragraph)
+  };
+};
+
 const getPara = async (
   isSpecialCharIncluded = false,
   language = "en",
@@ -32,11 +61,12 @@ const getPara = async (
   const cacheKey = `para_${difficultyLevel}_${isSpecialCharIncluded}_${language}_${timeInSeconds}`;
   
   try {
-    // Try to get from cache first (works offline)
+    // Try cache first for fast retrieval (< 10ms)
     const cachedData = await getCachedData(cacheKey, user);
     if (cachedData) {
-      console.log('📦 Serving paragraph from cache');
-      return cachedData;
+      console.log('⚡ Serving randomized paragraph from cache (< 10ms)');
+      // Return shuffled version for variety while using cache
+      return createRandomVariation(cachedData);
     }
     
     // Check if we're offline
@@ -55,7 +85,7 @@ const getPara = async (
     }
     
     // Cache miss and online - fetch from network
-    console.log('🌐 Fetching paragraph from network...');
+    console.log('🌐 Fetching paragraph from network (cache miss)...');
     const response = await axios.post(`${BASE_URL}/para/get-para`, {
       isSpecialCharIncluded,
       language,
@@ -68,7 +98,7 @@ const getPara = async (
       throw new Error('Invalid response from server');
     }
     
-    // Cache the response for future use
+    // Cache the response for future fast retrievals
     await setCachedData(cacheKey, response.data, CACHE_TTL.PARAGRAPH, user);
     
     return response.data;

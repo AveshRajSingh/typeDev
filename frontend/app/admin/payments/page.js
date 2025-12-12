@@ -315,7 +315,7 @@ export default function AdminPaymentsPage() {
               <button
                 type="submit"
                 disabled={loading || !reconcileFile}
-                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold py-4 rounded-lg hover:from-blue-700 hover:to-purple-700 disabled:opacity-50"
+                className="w-full bg-linear-to-r from-blue-600 to-purple-600 text-white font-bold py-4 rounded-lg hover:from-blue-700 hover:to-purple-700 disabled:opacity-50"
               >
                 {loading ? "Processing..." : "Start Reconciliation"}
               </button>
