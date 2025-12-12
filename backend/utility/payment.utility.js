@@ -220,17 +220,24 @@ export const markExpiredOrders = async () => {
 export const validateUPITransactionId = (txnId) => {
   if (!txnId) return false;
   
-  // UPI transaction IDs are typically 12 digits
-  const upiPattern = /^\d{12}$/;
-  return upiPattern.test(txnId.trim());
+  const trimmed = txnId.trim();
+  
+  // UPI transaction IDs can be:
+  // - 12 digits (e.g., 336912345678)
+  // - Alphanumeric UTR/RRN (e.g., T2312345678901)
+  // Must be 10-25 characters, alphanumeric only
+  if (trimmed.length < 10 || trimmed.length > 25) return false;
+  
+  const upiPattern = /^[A-Za-z0-9]+$/;
+  return upiPattern.test(trimmed);
 };
 
 /**
- * Calculate order expiry time (15 minutes from now)
+ * Calculate order expiry time (30 minutes from now)
  * @returns {Date} - Expiry timestamp
  */
 export const calculateOrderExpiry = () => {
   const expiry = new Date();
-  expiry.setMinutes(expiry.getMinutes() + 15);
+  expiry.setMinutes(expiry.getMinutes() + 30);
   return expiry;
 };

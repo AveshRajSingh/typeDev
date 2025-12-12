@@ -123,7 +123,7 @@ export const submitTransaction = async (req, res) => {
     if (!validateUPITransactionId(upiTransactionId)) {
       return res.status(400).json({
         message: "Invalid UPI transaction ID",
-        error: "Transaction ID must be a 12-digit number"
+        error: "Transaction ID must be 10-25 alphanumeric characters (e.g., 12-digit number or UTR/RRN)"
       });
     }
     
@@ -167,7 +167,50 @@ export const submitTransaction = async (req, res) => {
       });
     }
     
-    // Update order with transaction details
+    // Get user details for notification
+    const user = await User.findById(userId).select("username email isAdmin");
+    
+    // Check if user is admin - auto-approve their payments
+    if (user.isAdmin) {
+      // Auto-approve admin's payment
+      const premiumData = await activatePremium(userId, order.planType);
+      
+      order.userSubmittedTxnId = upiTransactionId;
+      order.status = "verified";
+      order.verifiedAt = new Date();
+      order.verifiedBy = userId; // Self-verified
+      order.bankReconciled = true;
+      order.notes = "Auto-verified for admin user";
+      
+      if (screenshot) {
+        order.screenshotUrl = `/uploads/payment-screenshots/${screenshot.filename}`;
+      }
+      
+      await order.save();
+      
+      // Send admin confirmation email
+      await sendUserNotification(user.email, "payment_verified", {
+        username: user.username,
+        orderId: order._id,
+        planType: order.planType,
+        amount: order.uniqueAmount,
+        txnId: upiTransactionId,
+        premiumExpiresAt: premiumData.premiumExpiresAt
+      });
+      
+      return res.status(200).json({
+        message: "Transaction auto-verified for admin",
+        data: {
+          orderId: order._id,
+          status: order.status,
+          isPremium: premiumData.isPremium,
+          premiumExpiresAt: premiumData.premiumExpiresAt,
+          message: "Your premium access has been activated immediately!"
+        }
+      });
+    }
+    
+    // Regular user flow - needs admin verification
     order.userSubmittedTxnId = upiTransactionId;
     order.status = "submitted";
     
@@ -176,9 +219,6 @@ export const submitTransaction = async (req, res) => {
     }
     
     await order.save();
-    
-    // Get user details for notification
-    const user = await User.findById(userId).select("username email");
     
     // Send admin notifications
     await sendAdminNotification("payment_submitted", {

@@ -4,6 +4,9 @@ const PAGES_CACHE = `${CACHE_VERSION}-pages`;
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const API_CACHE = `${CACHE_VERSION}-api`;
 
+// Check if we're in development mode
+const isDevelopment = self.location.hostname === 'localhost' || self.location.hostname === '127.0.0.1';
+
 // Pages to cache for offline use
 const PAGES_TO_CACHE = [
   '/',
@@ -80,10 +83,11 @@ self.addEventListener('fetch', (event) => {
   // Handle navigation requests (page loads)
   if (request.mode === 'navigate') {
     event.respondWith(
-      fetch(request)
+      // Network-first strategy: Always try network first
+      fetch(request, { cache: 'no-cache' })
         .then((response) => {
-          // Clone and cache successful responses
-          if (response.ok) {
+          // Clone and cache successful responses only if not in development
+          if (response.ok && !isDevelopment) {
             const responseClone = response.clone();
             caches.open(PAGES_CACHE).then((cache) => {
               cache.put(request, responseClone);
@@ -161,27 +165,34 @@ self.addEventListener('fetch', (event) => {
   }
 
   // Handle other requests (JS, CSS, images, etc.)
+  // In development: Network-first always
+  // In production: Cache-first for performance, but revalidate
   event.respondWith(
-    caches.match(request).then((cachedResponse) => {
-      if (cachedResponse) {
-        return cachedResponse;
-      }
-
-      return fetch(request).then((response) => {
-        // Cache successful responses
-        if (response.ok && (request.method === 'GET')) {
-          const responseClone = response.clone();
-          caches.open(STATIC_CACHE).then((cache) => {
-            cache.put(request, responseClone);
+    isDevelopment
+      ? // Development: Always fetch from network
+        fetch(request, { cache: 'no-store' })
+          .catch(() => caches.match(request))
+      : // Production: Try cache first, then network
+        caches.match(request).then((cachedResponse) => {
+          const fetchPromise = fetch(request).then((response) => {
+            // Cache successful responses
+            if (response.ok && request.method === 'GET') {
+              const responseClone = response.clone();
+              caches.open(STATIC_CACHE).then((cache) => {
+                cache.put(request, responseClone);
+              });
+            }
+            return response;
           });
-        }
-        return response;
-      }).catch(() => {
-        // Network failed and no cache
-        console.log('Service Worker: Failed to fetch:', request.url);
-        return new Response('Offline', { status: 503, statusText: 'Service Unavailable' });
-      });
-    })
+
+          // Return cached version while updating in background
+          return cachedResponse || fetchPromise;
+        })
+        .catch(() => {
+          // Network failed and no cache
+          console.log('Service Worker: Failed to fetch:', request.url);
+          return new Response('Offline', { status: 503, statusText: 'Service Unavailable' });
+        })
   );
 });
 

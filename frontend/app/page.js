@@ -83,6 +83,17 @@ export default function Home() {
       <div className="absolute top-4 right-4 flex gap-3 items-center">
         {isAuthenticated && user ? (
           <>
+            {user.isAdmin && (
+              <button
+                onClick={() => router.push('/admin/payments')}
+                className="px-4 py-2 rounded-full hover:opacity-80 transition-opacity font-semibold text-white"
+                style={{ backgroundColor: "var(--primary)" }}
+                aria-label="Admin Dashboard"
+                title="Admin Dashboard"
+              >
+                🛡️ Admin
+              </button>
+            )}
             <button
               onClick={() => router.push('/premium')}
               className="px-4 py-2 rounded-full hover:opacity-80 transition-opacity font-semibold text-white"

@@ -1,11 +1,12 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useTheme } from '../context/ThemeContext'
 
 export default function ThemeSelector() {
   const { theme, changeTheme } = useTheme()
   const [isOpen, setIsOpen] = useState(false)
+  const [mounted, setMounted] = useState(false)
 
   const themeOptions = [
     { value: 'system', label: 'System', icon: '💻' },
@@ -18,6 +19,31 @@ export default function ThemeSelector() {
   ]
 
   const currentThemeOption = themeOptions.find(opt => opt.value === theme)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  // Prevent hydration mismatch by not rendering until mounted
+  if (!mounted) {
+    return (
+      <div className="relative">
+        <button
+          className="flex items-center gap-2 px-4 py-2 rounded-lg border transition-all duration-200"
+          style={{
+            backgroundColor: 'var(--input)',
+            borderColor: 'var(--inputBorder)',
+            color: 'var(--foreground)',
+            opacity: 0.5,
+          }}
+          disabled
+        >
+          <span className="text-lg">💻</span>
+          <span className="font-medium">Theme</span>
+        </button>
+      </div>
+    )
+  }
 
   return (
     <div className="relative">

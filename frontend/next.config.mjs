@@ -9,7 +9,7 @@ const nextConfig = {
     optimizePackageImports: ['lucide-react'],
   },
 
-  // Headers for service worker
+  // Headers for service worker and cache control
   async headers() {
     return [
       {
@@ -26,6 +26,18 @@ const nextConfig = {
           {
             key: 'Service-Worker-Allowed',
             value: '/',
+          },
+        ],
+      },
+      {
+        // Prevent caching of dynamic pages in development
+        source: '/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: process.env.NODE_ENV === 'development' 
+              ? 'no-store, must-revalidate' 
+              : 'public, max-age=3600, must-revalidate',
           },
         ],
       },

@@ -1,17 +1,18 @@
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "./context/ThemeContext";
 import { UserProvider } from "./context/UserContext";
 import OnlineStatusIndicator from "./components/OnlineStatusIndicator";
 import CacheWarmer from "./components/CacheWarmer";
 import ServiceWorkerInit from "./components/ServiceWorkerInit";
+import DevCacheClearButton from "./components/DevCacheClearButton";
 
-const geistSans = Geist({
+const inter = Inter({
   variable: "--font-geist-sans",
   subsets: ["latin"],
 });
 
-const geistMono = Geist_Mono({
+const jetbrainsMono = JetBrains_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
 });
@@ -29,7 +30,7 @@ export default function RootLayout({ children }) {
         <meta name="theme-color" content="#60a5fa" />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${inter.variable} ${jetbrainsMono.variable} antialiased`}
       >
         <script
           dangerouslySetInnerHTML={{
@@ -69,6 +70,7 @@ export default function RootLayout({ children }) {
             <ServiceWorkerInit />
             <OnlineStatusIndicator />
             <CacheWarmer />
+            <DevCacheClearButton />
             {children}
           </UserProvider>
         </ThemeProvider>

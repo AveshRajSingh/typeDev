@@ -13,7 +13,7 @@ import {
 
 export default function AdminPaymentsPage() {
   const router = useRouter();
-  const { user, isLoggedIn } = useContext(UserContext);
+  const { user, isAuthenticated, loading: userLoading } = useContext(UserContext);
   const [activeTab, setActiveTab] = useState("pending");
   const [orders, setOrders] = useState([]);
   const [notifications, setNotifications] = useState([]);
@@ -27,7 +27,10 @@ export default function AdminPaymentsPage() {
 
   // Check admin access
   useEffect(() => {
-    if (!isLoggedIn) {
+    // Wait for user context to load
+    if (userLoading) return;
+    
+    if (!isAuthenticated) {
       router.push("/auth");
       return;
     }
@@ -35,7 +38,7 @@ export default function AdminPaymentsPage() {
       router.push("/");
       return;
     }
-  }, [isLoggedIn, user, router]);
+  }, [isAuthenticated, user, router, userLoading]);
 
   // Fetch data
   useEffect(() => {
@@ -127,12 +130,17 @@ export default function AdminPaymentsPage() {
     }
   };
 
-  if (!isLoggedIn || !user?.isAdmin) {
+  // Show loading while checking authentication
+  if (userLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <p className="text-gray-600">Access denied. Admin only.</p>
+        <p className="text-gray-600">Loading...</p>
       </div>
     );
+  }
+
+  if (!isAuthenticated || !user?.isAdmin) {
+    return null; // Will redirect via useEffect
   }
 
   return (

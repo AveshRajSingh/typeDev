@@ -50,7 +50,7 @@ export const sendAdminNotification = async (type, data) => {
     const telegramResult = await sendTelegramNotification(type, data);
     notifications.push({ channel: "telegram", success: true, data: telegramResult });
   } catch (error) {
-    console.error("Telegram notification failed:", error);
+    console.warn("⚠️  Telegram notification failed:", error.message);
     notifications.push({ channel: "telegram", success: false, error: error.message });
   }
   
@@ -110,12 +110,21 @@ const sendTelegramNotification = async (type, data) => {
   const notificationData = formatNotificationData(type, data);
   const message = formatTelegramMessage(notificationData, data);
   
-  const result = await telegramBot.sendMessage(TELEGRAM_ADMIN_CHAT_ID, message, {
-    parse_mode: "HTML",
-    disable_web_page_preview: true
-  });
-  
-  return result;
+  try {
+    const result = await telegramBot.sendMessage(TELEGRAM_ADMIN_CHAT_ID, message, {
+      parse_mode: "HTML",
+      disable_web_page_preview: true
+    });
+    return result;
+  } catch (error) {
+    // Handle specific Telegram errors
+    if (error.code === 'ETELEGRAM') {
+      if (error.response?.body?.description?.includes('chat not found')) {
+        throw new Error('Telegram chat not found. Please start a chat with the bot first.');
+      }
+    }
+    throw error;
+  }
 };
 
 /**

@@ -9,13 +9,13 @@ const orderSchema = new mongoose.Schema({
   },
   planType: {
     type: String,
-    enum: ["monthly", "yearly", "lifetime"],
+    enum: ["test", "monthly", "yearly", "lifetime"],
     required: true
   },
   baseAmount: {
     type: Number,
     required: true,
-    enum: [69, 200, 599] // monthly: 69, yearly: 200, lifetime: 599
+    enum: [2, 69, 200, 599] // test: 2, monthly: 69, yearly: 200, lifetime: 599
   },
   uniqueAmount: {
     type: Number,
@@ -103,43 +103,22 @@ orderSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 30 * 24 * 60 * 60 });
 
 // Static method to get next available paise sequence
 orderSchema.statics.getNextPaiseSequence = async function(planType) {
-  const maxSequence = await this.findOne({ planType })
-    .sort({ paiseSequence: -1 })
-    .select("paiseSequence")
-    .lean();
-  
-  if (!maxSequence) {
-    return 1; // First order for this plan type
-  }
-  
-  // Recycle sequences from 1-99
-  const nextSequence = (maxSequence.paiseSequence % 99) + 1;
-  
-  // Check if this sequence is already in use by a pending/submitted order
-  const existingOrder = await this.findOne({
+  // Only look at active (pending/submitted) orders for recycling
+  const activeOrders = await this.find({
     planType,
-    paiseSequence: nextSequence,
     status: { $in: ["pending", "submitted"] }
-  });
+  }).select("paiseSequence").lean();
   
-  if (existingOrder) {
-    // Sequence collision - find first available gap
-    const usedSequences = await this.find({
-      planType,
-      status: { $in: ["pending", "submitted"] }
-    }).select("paiseSequence").lean();
-    
-    const usedSet = new Set(usedSequences.map(o => o.paiseSequence));
-    for (let i = 1; i <= 99; i++) {
-      if (!usedSet.has(i)) {
-        return i;
-      }
+  const usedSet = new Set(activeOrders.map(o => o.paiseSequence));
+  
+  // Find first available sequence from 1-99
+  for (let i = 1; i <= 99; i++) {
+    if (!usedSet.has(i)) {
+      return i;
     }
-    
-    throw new Error(`All paise sequences (1-99) are currently in use for ${planType} plan`);
   }
   
-  return nextSequence;
+  throw new Error(`All paise sequences (1-99) are currently in use for ${planType} plan. Please try again later.`);
 };
 
 // Method to check if order is expired

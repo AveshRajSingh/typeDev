@@ -74,7 +74,7 @@ export default function PaymentStatusPage() {
 
   // Initial fetch
   useEffect(() => {
-    if (!isLoggedIn) {
+    if (!isAuthenticated) {
       router.push("/auth?redirect=/payment-status/" + orderId);
       return;
     }
@@ -82,7 +82,8 @@ export default function PaymentStatusPage() {
     if (orderId) {
       fetchOrderStatus();
     }
-  }, [orderId, isLoggedIn]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orderId, isAuthenticated]);
 
   // Poll for status updates every 5 seconds if submitted
   useEffect(() => {
@@ -109,8 +110,8 @@ export default function PaymentStatusPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!formData.upiTransactionId.match(/^\d{12}$/)) {
-      alert("Please enter a valid 12-digit UPI transaction ID");
+    if (!formData.upiTransactionId || formData.upiTransactionId.trim().length < 10) {
+      alert("Please enter a valid UPI transaction ID (minimum 10 characters)");
       return;
     }
 
@@ -128,7 +129,7 @@ export default function PaymentStatusPage() {
     }
   };
 
-  if (!isLoggedIn) {
+  if (!isAuthenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <p className="text-gray-600">Redirecting to login...</p>
@@ -282,22 +283,22 @@ export default function PaymentStatusPage() {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-gray-700 font-semibold mb-2">
-                  UPI Transaction ID <span className="text-red-500">*</span>
+                  UPI Transaction ID / UTR Number <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   name="upiTransactionId"
                   value={formData.upiTransactionId}
                   onChange={handleInputChange}
-                  placeholder="Enter 12-digit transaction ID"
-                  maxLength="12"
-                  pattern="\d{12}"
+                  placeholder="e.g., 336912345678 or T2312345678901"
+                  minLength="10"
+                  maxLength="25"
                   required
                   disabled={order.status === "submitted"}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                 />
                 <p className="text-sm text-gray-500 mt-1">
-                  Find this in your UPI app's transaction history
+                  Find this in your UPI app's transaction history (12-digit number or alphanumeric UTR/RRN)
                 </p>
               </div>
 

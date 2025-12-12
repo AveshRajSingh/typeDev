@@ -96,7 +96,9 @@ export const submitTransactionSchema = yup.object({
   upiTransactionId: yup
     .string()
     .required("UPI transaction ID is required")
-    .matches(/^\d{12}$/, "UPI transaction ID must be 12 digits")
+    .min(10, "Transaction ID must be at least 10 characters")
+    .max(25, "Transaction ID cannot exceed 25 characters")
+    .matches(/^[A-Za-z0-9]+$/, "Transaction ID must contain only letters and numbers")
     .trim()
 });
 

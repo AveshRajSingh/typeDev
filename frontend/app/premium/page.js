@@ -83,18 +83,6 @@ export default function PremiumPage() {
     }
   }, [isAuthenticated, userLoading, router]);
 
-  // Show loading state while checking authentication
-  if (userLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "var(--background)" }}>
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-solid border-current border-r-transparent" style={{ color: "var(--primary)" }}></div>
-          <p className="mt-4" style={{ color: "var(--foreground)" }}>Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
   // Fetch pending order on mount
   useEffect(() => {
     const fetchPendingOrder = async () => {
@@ -188,6 +176,18 @@ export default function PremiumPage() {
   const handleNavigateToSubmit = () => {
     router.push(`/payment-status/${orderData.orderId}`);
   };
+
+  // Show loading state while checking authentication
+  if (userLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "var(--background)" }}>
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-solid border-current border-r-transparent" style={{ color: "var(--primary)" }}></div>
+          <p className="mt-4" style={{ color: "var(--foreground)" }}>Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!isAuthenticated) {
     return (
