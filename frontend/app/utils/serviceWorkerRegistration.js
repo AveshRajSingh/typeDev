@@ -10,7 +10,6 @@ let registration = null;
  */
 export const registerServiceWorker = async () => {
   if (typeof window === 'undefined' || !('serviceWorker' in navigator)) {
-    console.log('Service Worker not supported');
     return null;
   }
 
@@ -20,17 +19,13 @@ export const registerServiceWorker = async () => {
       scope: '/',
     });
 
-    console.log('✅ Service Worker registered:', registration.scope);
-
     // Handle updates
     registration.addEventListener('updatefound', () => {
       const newWorker = registration.installing;
-      console.log('🔄 Service Worker update found');
 
       newWorker.addEventListener('statechange', () => {
         if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
           // New service worker available
-          console.log('🆕 New Service Worker available - refresh to update');
         }
       });
     });
@@ -60,7 +55,6 @@ export const unregisterServiceWorker = async () => {
     for (const registration of registrations) {
       await registration.unregister();
     }
-    console.log('Service Worker unregistered');
     return true;
   } catch (error) {
     console.error('Failed to unregister Service Worker:', error);

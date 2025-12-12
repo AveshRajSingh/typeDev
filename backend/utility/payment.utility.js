@@ -12,7 +12,7 @@ const UPI_CONFIG = {
 // Plan Configuration
 export const PLAN_CONFIG = {
   test: {
-    amount: 2,
+    amount: 15,
     durationDays: 1,
     label: "Test Plan"
   },
@@ -172,10 +172,6 @@ export const deactivateExpiredPremiums = async () => {
       }
     );
     
-    if (result.modifiedCount > 0) {
-      console.log(`Deactivated ${result.modifiedCount} expired premium subscriptions`);
-    }
-    
     return result.modifiedCount;
   } catch (error) {
     console.error("Failed to deactivate expired premiums:", error);
@@ -200,10 +196,6 @@ export const markExpiredOrders = async () => {
         $set: { status: "expired" }
       }
     );
-    
-    if (result.modifiedCount > 0) {
-      console.log(`Marked ${result.modifiedCount} orders as expired`);
-    }
     
     return result.modifiedCount;
   } catch (error) {

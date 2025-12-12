@@ -18,7 +18,6 @@ export const saveTestResults = (results) => {
     sessionStorage.setItem(STORAGE_TIMESTAMP_KEY, timestamp.toString());
     return true;
   } catch (error) {
-    console.error('Failed to save test results to sessionStorage:', error);
     return false;
   }
 };
@@ -45,7 +44,6 @@ export const loadTestResults = () => {
 
     return JSON.parse(data);
   } catch (error) {
-    console.error('Failed to load test results from sessionStorage:', error);
     return null;
   }
 };
@@ -58,7 +56,7 @@ export const clearTestResults = () => {
     sessionStorage.removeItem(STORAGE_KEY);
     sessionStorage.removeItem(STORAGE_TIMESTAMP_KEY);
   } catch (error) {
-    console.error('Failed to clear test results from sessionStorage:', error);
+    // Silent fail
   }
 };
 

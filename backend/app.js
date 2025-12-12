@@ -90,7 +90,6 @@ app.get('/', (req, res) => {
 // Cron jobs for payment system
 // Run every day at midnight to check expired premiums
 cron.schedule('0 0 * * *', async () => {
-  console.log('Running daily premium expiry check...');
   try {
     await deactivateExpiredPremiums();
   } catch (error) {
@@ -100,7 +99,7 @@ cron.schedule('0 0 * * *', async () => {
 
 // Run every 5 minutes to mark expired orders
 cron.schedule('*/5 * * * *', async () => {
-  console.log('Running order expiry check...');
+
   try {
     await markExpiredOrders();
   } catch (error) {
@@ -162,17 +161,13 @@ app.use((err, req, res, next) => {
 
 // Graceful shutdown handlers
 process.on('SIGTERM', () => {
-  console.log('SIGTERM signal received: closing HTTP server');
   server.close(() => {
-    console.log('HTTP server closed');
     process.exit(0);
   });
 });
 
 process.on('SIGINT', () => {
-  console.log('SIGINT signal received: closing HTTP server');
   server.close(() => {
-    console.log('HTTP server closed');
     process.exit(0);
   });
 });
@@ -188,12 +183,7 @@ process.on('unhandledRejection', (reason, promise) => {
 let server;
 connectDb().then(() => {
   const PORT = process.env.PORT || 5000;
-  server = app.listen(PORT, () => {
-    console.log(`✅ Server is running on port ${PORT}`);
-    console.log(`✅ Environment: ${process.env.NODE_ENV || 'development'}`);
-    console.log(`✅ Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:3000'}`);
-    console.log(`✅ Health check: http://localhost:${PORT}/health`);
-  });
+  server = app.listen(PORT);
 }).catch((error) => {
   console.error("❌ Failed to start server due to database connection error:", error.message);
   process.exit(1);

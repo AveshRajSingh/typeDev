@@ -12,14 +12,8 @@ const IS_TELEGRAM_ENABLED = TELEGRAM_BOT_TOKEN && TELEGRAM_ADMIN_CHAT_ID;
 if (IS_TELEGRAM_ENABLED) {
   try {
     telegramBot = new TelegramBot(TELEGRAM_BOT_TOKEN, { polling: false });
-    console.log("✅ Telegram Bot initialized");
   } catch (error) {
-    console.warn("⚠️  Telegram Bot initialization failed:", error.message);
     telegramBot = null; // Ensure it's null on failure
-  }
-} else {
-  if (process.env.NODE_ENV === 'development') {
-    console.log("ℹ️  Telegram notifications disabled (dev mode)");
   }
 }
 
@@ -36,7 +30,6 @@ export const sendAdminNotification = async (type, data) => {
     const inAppNotification = await createInAppNotification(type, data);
     notifications.push({ channel: "in-app", success: true, data: inAppNotification });
   } catch (error) {
-    console.error("In-app notification failed:", error);
     notifications.push({ channel: "in-app", success: false, error: error.message });
   }
   
@@ -45,7 +38,6 @@ export const sendAdminNotification = async (type, data) => {
     const emailResult = await sendEmailNotification(type, data);
     notifications.push({ channel: "email", success: true, data: emailResult });
   } catch (error) {
-    console.error("Email notification failed:", error);
     notifications.push({ channel: "email", success: false, error: error.message });
   }
   
@@ -55,7 +47,6 @@ export const sendAdminNotification = async (type, data) => {
       const telegramResult = await sendTelegramNotification(type, data);
       notifications.push({ channel: "telegram", success: true, data: telegramResult });
     } catch (error) {
-      console.warn("⚠️  Telegram notification failed:", error.message);
       notifications.push({ channel: "telegram", success: false, error: error.message });
     }
   }
@@ -280,7 +271,6 @@ export const sendUserNotification = async (email, type, data) => {
     const info = await transporter.sendMail(mailOptions);
     return info;
   } catch (error) {
-    console.error("User notification email failed:", error);
     throw error;
   }
 };

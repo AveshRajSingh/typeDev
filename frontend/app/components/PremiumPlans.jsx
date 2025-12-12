@@ -9,7 +9,7 @@ const PLANS = [
   {
     type: "test",
     name: "Test Plan",
-    price: 2,
+    price: 15,
     duration: "1 day",
     features: [
       "Testing payment flow",

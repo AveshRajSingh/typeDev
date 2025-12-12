@@ -21,24 +21,19 @@ const STATIC_ASSETS = [
 
 // Install event - cache core pages
 self.addEventListener('install', (event) => {
-  console.log('Service Worker: Installing...');
-  
   event.waitUntil(
     Promise.all([
       caches.open(PAGES_CACHE).then((cache) => {
-        console.log('Service Worker: Caching pages');
         return cache.addAll(PAGES_TO_CACHE.map(url => new Request(url, { cache: 'reload' })));
       }).catch(error => {
-        console.error('Failed to cache pages:', error);
+        // Silent fail
       }),
       caches.open(STATIC_CACHE).then((cache) => {
-        console.log('Service Worker: Caching static assets');
         return cache.addAll(STATIC_ASSETS).catch(error => {
-          console.error('Failed to cache static assets:', error);
+          // Silent fail
         });
       })
     ]).then(() => {
-      console.log('Service Worker: Installation complete');
       return self.skipWaiting();
     })
   );
@@ -46,20 +41,16 @@ self.addEventListener('install', (event) => {
 
 // Activate event - clean up old caches
 self.addEventListener('activate', (event) => {
-  console.log('Service Worker: Activating...');
-  
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
           if (cacheName.startsWith('typedev-') && cacheName !== PAGES_CACHE && cacheName !== STATIC_CACHE && cacheName !== API_CACHE) {
-            console.log('Service Worker: Deleting old cache:', cacheName);
             return caches.delete(cacheName);
           }
         })
       );
     }).then(() => {
-      console.log('Service Worker: Activation complete');
       return self.clients.claim();
     })
   );
@@ -99,14 +90,12 @@ self.addEventListener('fetch', (event) => {
           // Network failed, try cache
           return caches.match(request).then((cachedResponse) => {
             if (cachedResponse) {
-              console.log('Service Worker: Serving page from cache:', url.pathname);
               return cachedResponse;
             }
             
             // No cache, serve root page as fallback
             return caches.match('/').then((rootResponse) => {
               if (rootResponse) {
-                console.log('Service Worker: Serving root page as fallback');
                 return rootResponse;
               }
               
@@ -190,7 +179,6 @@ self.addEventListener('fetch', (event) => {
         })
         .catch(() => {
           // Network failed and no cache
-          console.log('Service Worker: Failed to fetch:', request.url);
           return new Response('Offline', { status: 503, statusText: 'Service Unavailable' });
         })
   );

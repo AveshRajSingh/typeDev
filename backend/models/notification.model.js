@@ -79,7 +79,6 @@ notificationSchema.statics.createForAdmins = async function(notificationData) {
   const admins = await User.find({ isAdmin: true }).select("_id").lean();
   
   if (admins.length === 0) {
-    console.warn("No admin users found to send notification");
     return [];
   }
   

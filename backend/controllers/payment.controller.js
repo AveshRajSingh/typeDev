@@ -457,7 +457,6 @@ export const reconcilePayments = async (req, res) => {
         // Check if transaction already imported
         const existingTxn = await Transaction.findOne({ transactionId });
         if (existingTxn) {
-          console.log(`Transaction ${transactionId} already imported, skipping...`);
           continue;
         }
         
