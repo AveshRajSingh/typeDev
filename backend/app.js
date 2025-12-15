@@ -3,6 +3,8 @@ dotenv.config();
 import express from 'express';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import cron from 'node-cron';
 import { connectDb } from './db/index.js';
 import { deactivateExpiredPremiums, markExpiredOrders } from './utility/payment.utility.js';
@@ -16,6 +18,39 @@ if (missingEnvVars.length > 0) {
   console.error(`❌ Missing required environment variables: ${missingEnvVars.join(', ')}`);
   process.exit(1);
 }
+
+// Security middleware - Helmet
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      imgSrc: ["'self'", "data:", "blob:"],
+    },
+  },
+}));
+
+// Rate limiting - Protect against brute force and DDoS
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
+  message: 'Too many requests from this IP, please try again later.',
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Stricter rate limit for authentication routes
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10, // Limit to 10 login/signup attempts per 15 minutes
+  message: 'Too many authentication attempts, please try again later.',
+  skipSuccessfulRequests: true,
+});
+
+app.use('/users/login', authLimiter);
+app.use('/users/create-user', authLimiter);
+app.use('/users/verify-otp', authLimiter);
+app.use(limiter); // Apply to all other routes
 
 // Determine allowed origins based on environment
 const allowedOrigins = process.env.NODE_ENV === 'production'
