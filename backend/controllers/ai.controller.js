@@ -224,25 +224,22 @@ export const generateParagraph = async (req, res) => {
       quotaRemaining = -1; // Unlimited
     }
 
-    // Validate error frequency map
-    if (!errorFrequencyMap || Object.keys(errorFrequencyMap).length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: "Error frequency map is required to generate targeted paragraph",
-      });
-    }
-
-    // Prepare AI prompt
-    const weakCharacters = Object.entries(errorFrequencyMap)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 8)
-      .map(([char, count]) => char)
-      .join(', ');
-
+    // Prepare AI prompt based on error frequency map
     const targetWordCount = wordCount || 50;
     const targetDifficulty = difficulty || 'medium';
+    
+    let prompt;
+    const hasErrors = errorFrequencyMap && Object.keys(errorFrequencyMap).length > 0;
+    
+    if (hasErrors) {
+      // Generate targeted paragraph focusing on weak characters
+      const weakCharacters = Object.entries(errorFrequencyMap)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 8)
+        .map(([char, count]) => char)
+        .join(', ');
 
-    const prompt = `Generate a typing practice paragraph with exactly ${targetWordCount} words.
+      prompt = `Generate a typing practice paragraph with exactly ${targetWordCount} words.
 
 Requirements:
 1. Must contain EXACTLY ${targetWordCount} words (count carefully)
@@ -255,6 +252,21 @@ Requirements:
 8. Return ONLY the paragraph text, no explanations or extra formatting
 
 Focus on incorporating the weak characters: ${weakCharacters}`;
+    } else {
+      // Generate general practice paragraph
+      prompt = `Generate a typing practice paragraph with exactly ${targetWordCount} words.
+
+Requirements:
+1. Must contain EXACTLY ${targetWordCount} words (count carefully)
+2. Difficulty level: ${targetDifficulty}
+3. Include a balanced mix of common letters, punctuation, and characters
+4. Create natural, readable sentences (not random words)
+5. Make it engaging and educational
+6. Include proper punctuation and capitalization
+7. Return ONLY the paragraph text, no explanations or extra formatting
+
+Generate a well-rounded paragraph for typing practice at ${targetDifficulty} difficulty level.`;
+    }
 
     // Call Groq API
     const completion = await groq.chat.completions.create({
