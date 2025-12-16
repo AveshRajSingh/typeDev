@@ -74,9 +74,9 @@ export default function ProfilePage() {
     }
   };
 
-  const handleLogout = () => {
-    logout();
-    router.push('/');
+  const handleLogout = async () => {
+    await logout();
+    // Navigation is handled by logout function
   };
 
   if (loading) {

@@ -96,6 +96,12 @@ export const UserProvider = ({ children }) => {
     } catch (error) {
       console.error('Failed to clear cache on logout:', error)
     }
+    
+    // Reload the page to ensure all state is cleared
+    // This prevents race conditions with automatic user fetching
+    if (typeof window !== 'undefined') {
+      window.location.href = '/'
+    }
   }
 
   const updateUser = (userData) => {
