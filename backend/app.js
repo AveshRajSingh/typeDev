@@ -11,6 +11,10 @@ import { deactivateExpiredPremiums, markExpiredOrders } from './utility/payment.
 
 const app = express();
 
+// Trust proxy - Required for platforms like Render, Heroku, etc.
+// This allows Express to trust the X-Forwarded-* headers
+app.set('trust proxy', 1);
+
 // Environment variables validation
 const requiredEnvVars = ['MONGO_URI', 'ACCESS_TOKEN_SECRET', 'REFRESH_TOKEN_SECRET'];
 const missingEnvVars = requiredEnvVars.filter(v => !process.env[v]);
