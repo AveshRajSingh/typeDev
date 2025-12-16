@@ -11,7 +11,7 @@ import { useOfflineRouter } from "./utils/offlineNavigation";
 
 export default function Home() {
   const router = useOfflineRouter();
-  const { user, isAuthenticated } = useUser();
+  const { user, isAuthenticated, logout } = useUser();
   const [timer, setTimer] = useState(30);
   const [difficulty, setDifficulty] = useState("easy");
   const [includeSpecialChars, setIncludeSpecialChars] = useState(false);
@@ -87,6 +87,11 @@ export default function Home() {
     }
   };
 
+  const handleLogout = () => {
+    logout();
+    router.push('/');
+  };
+
   return (
     <main
       className="min-h-screen p-4"
@@ -109,6 +114,15 @@ export default function Home() {
                 🛡️ Admin
               </button>
             )}
+            <button
+              onClick={handleLogout}
+              className="px-4 py-2 rounded-full hover:opacity-80 transition-opacity font-semibold text-white"
+              style={{ backgroundColor: "#dc2626" }}
+              aria-label="Logout"
+              title="Logout"
+            >
+              Logout
+            </button>
             <button
               onClick={handleProfileClick}
               className="w-10 h-10 rounded-full hover:opacity-80 transition-opacity flex items-center justify-center font-bold text-white text-lg"
