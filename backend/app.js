@@ -72,8 +72,15 @@ app.use(cors({
     // Allow requests with no origin (mobile apps, Postman, etc.)
     if (!origin) return callback(null, true);
     
+    // Allow all Vercel preview and production deployments
+    if (origin.endsWith('.vercel.app')) {
+      console.log('✅ CORS allowed Vercel deployment:', origin);
+      return callback(null, true);
+    }
+    
     // Check if origin is in allowed origins
     if (allowedOrigins.some(allowed => allowed && (origin === allowed || origin.startsWith(allowed)))) {
+      console.log('✅ CORS allowed origin:', origin);
       callback(null, true);
     } else {
       console.log('❌ CORS rejected origin:', origin);
