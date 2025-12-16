@@ -57,21 +57,30 @@ const allowedOrigins = process.env.NODE_ENV === 'production'
   ? [process.env.FRONTEND_URL || process.env.CORS_ORIGIN]
   : ['http://localhost:3000', 'http://127.0.0.1:3000'];
 
+console.log('🌐 CORS Configuration:', {
+  environment: process.env.NODE_ENV,
+  allowedOrigins: allowedOrigins
+});
+
 // CORS configuration for credentials
 app.use(cors({
   origin: function (origin, callback) {
     // Allow requests with no origin (mobile apps, Postman, etc.)
     if (!origin) return callback(null, true);
     
-    if (allowedOrigins.some(allowed => allowed && origin.startsWith(allowed))) {
+    // Check if origin is in allowed origins
+    if (allowedOrigins.some(allowed => allowed && (origin === allowed || origin.startsWith(allowed)))) {
       callback(null, true);
     } else {
+      console.log('❌ CORS rejected origin:', origin);
       callback(new Error('Not allowed by CORS'));
     }
   },
   credentials: true, // Allow cookies
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
+  exposedHeaders: ['Set-Cookie'],
+  optionsSuccessStatus: 200
 }));
 
 // Request parsing
