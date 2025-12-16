@@ -2,7 +2,6 @@ import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "./context/ThemeContext";
 import { UserProvider } from "./context/UserContext";
-import OnlineStatusIndicator from "./components/OnlineStatusIndicator";
 import CacheWarmer from "./components/CacheWarmer";
 import ServiceWorkerInit from "./components/ServiceWorkerInit";
 
@@ -67,7 +66,6 @@ export default function RootLayout({ children }) {
         <ThemeProvider>
           <UserProvider>
             <ServiceWorkerInit />
-            <OnlineStatusIndicator />
             <CacheWarmer />
             {children}
           </UserProvider>

@@ -219,6 +219,19 @@ const resendOtp = async (username) => {
   }
 };
 
+const logoutUser = async () => {
+  try {
+    const response = await api.post('/users/logout');
+    // Invalidate user cache
+    await invalidateCache('current_user');
+    return response.data;
+  } catch (error) {
+    const errorMessage = error.response?.data?.message || "Logout failed";
+    console.error("Logout error:", errorMessage);
+    throw new Error(errorMessage);
+  }
+};
+
 const getUserProfile = async (username) => {
   try {
     // Try cache first
@@ -483,7 +496,8 @@ const markNotificationRead = async (notificationId) => {
 
 export { 
   getPara, 
-  loginUser, 
+  loginUser,
+  logoutUser,
   getCurrentUser, 
   signupUser, 
   verifyOtp, 

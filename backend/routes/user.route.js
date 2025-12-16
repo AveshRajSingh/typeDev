@@ -5,6 +5,7 @@ import {
   verifyOtp,
   resendOtp,
   loginUser,
+  logoutUser,
   getCurrentUser,
   getUserProfile,
   incrementTestsTaken,
@@ -27,6 +28,7 @@ router.post("/resend-otp", validate(resendOtpSchema), resendOtp);
 router.post("/login", validate(loginUserSchema), loginUser);
 
 // Protected routes
+router.post("/logout", verifyJWT, logoutUser);
 router.get("/me", verifyJWT, getCurrentUser);
 router.post("/start-test", verifyJWT, incrementTestsTaken);
 router.post("/save-result", verifyJWT, validate(saveTestResultSchema), saveTestResult);

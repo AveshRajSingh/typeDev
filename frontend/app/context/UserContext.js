@@ -73,6 +73,15 @@ export const UserProvider = ({ children }) => {
   }
 
   const logout = async () => {
+    try {
+      // Call backend logout endpoint to clear cookies
+      const { logoutUser } = await import('../services/api')
+      await logoutUser()
+    } catch (error) {
+      console.error('Backend logout failed:', error)
+      // Continue with local cleanup even if backend fails
+    }
+    
     // Clear user state
     setUser(null)
     setError(null)
@@ -87,8 +96,6 @@ export const UserProvider = ({ children }) => {
     } catch (error) {
       console.error('Failed to clear cache on logout:', error)
     }
-    
-    // TODO: Call backend logout endpoint to clear cookies
   }
 
   const updateUser = (userData) => {

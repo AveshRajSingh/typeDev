@@ -450,4 +450,38 @@ const saveTestResult = async (req, res) => {
 };
 
 
-export { createUser, verifyOtp, resendOtp, loginUser, getCurrentUser, getUserProfile, incrementTestsTaken, saveTestResult };
+const logoutUser = async (req, res) => {
+  try {
+    const userId = req.user?._id;
+
+    // Clear refresh token in database
+    if (userId) {
+      await User.findByIdAndUpdate(userId, { refreshToken: null });
+    }
+
+    // Cookie options for clearing
+    const cookieOptions = {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    };
+
+    // Clear cookies and send response
+    return res
+      .status(200)
+      .clearCookie('accessToken', cookieOptions)
+      .clearCookie('refreshToken', cookieOptions)
+      .json({
+        message: "Logged out successfully",
+      });
+
+  } catch (error) {
+    console.error("logoutUser error:", error);
+    return res.status(500).json({ 
+      message: "Server error", 
+      error: error.message 
+    });
+  }
+};
+
+export { createUser, verifyOtp, resendOtp, loginUser, logoutUser, getCurrentUser, getUserProfile, incrementTestsTaken, saveTestResult };

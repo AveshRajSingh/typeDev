@@ -195,7 +195,7 @@ const Signup = ({ onSwitchToLogin, disabled = false }) => {
             value={formData.email}
             onChange={handleChange}
             onFocus={() => handleFocus('email')}
-            onBlur={() => handleBlur('email'))
+            onBlur={() => handleBlur('email')}
             className='w-full px-4 py-2.5 rounded-lg transition-all duration-200 focus:outline-none'
             style={{ 
               backgroundColor: 'var(--input)',
@@ -271,7 +271,7 @@ const Signup = ({ onSwitchToLogin, disabled = false }) => {
             value={formData.confirmPassword}
             onChange={handleChange}
             onFocus={() => handleFocus('confirmPassword')}
-            onBlur={() => handleBlur('confirmPassword'))
+            onBlur={() => handleBlur('confirmPassword')}
             className='w-full px-4 py-2.5 rounded-lg transition-all duration-200 focus:outline-none'
             style={{ 
               backgroundColor: 'var(--input)',
