@@ -84,7 +84,7 @@ const Login = ({ onSwitchToSignup, onClose, disabled = false }) => {
 
         <div className="relative">
           <label
-            htmlFor="usernameOrEmail"
+            htmlFor="login-usernameOrEmail"
             className={`absolute left-3 transition-all duration-300 ease-out pointer-events-none z-10 ${
               isFocused.usernameOrEmail || formData.usernameOrEmail
                 ? "-top-3 text-xs px-2 scale-95"
@@ -103,7 +103,7 @@ const Login = ({ onSwitchToSignup, onClose, disabled = false }) => {
           </label>
           <input
             type="text"
-            id="usernameOrEmail"
+            id="login-usernameOrEmail"
             name="usernameOrEmail"
             value={formData.usernameOrEmail}
             onChange={handleChange}
@@ -126,7 +126,7 @@ const Login = ({ onSwitchToSignup, onClose, disabled = false }) => {
 
         <div className="relative">
           <label
-            htmlFor="password"
+            htmlFor="login-password"
             className={`absolute left-3 transition-all duration-300 ease-out pointer-events-none z-10 ${
               isFocused.password || formData.password
                 ? "-top-3 text-xs px-2 scale-95"
@@ -143,7 +143,7 @@ const Login = ({ onSwitchToSignup, onClose, disabled = false }) => {
           </label>
           <input
             type="password"
-            id="password"
+            id="login-password"
             name="password"
             value={formData.password}
             onChange={handleChange}

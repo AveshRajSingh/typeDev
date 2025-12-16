@@ -135,7 +135,7 @@ const Signup = ({ onSwitchToLogin, disabled = false }) => {
         <form onSubmit={handleSubmit} className='space-y-3'>
         <div className="relative">
           <label
-            htmlFor='username'
+            htmlFor='signup-username'
             className={`absolute left-3 transition-all duration-300 ease-out pointer-events-none z-10 ${
               isFocused.username || formData.username
                 ? '-top-3 text-xs px-2 scale-95'
@@ -152,7 +152,7 @@ const Signup = ({ onSwitchToLogin, disabled = false }) => {
           </label>
           <input
             type='text'
-            id='username'
+            id='signup-username'
             name='username'
             value={formData.username}
             onChange={handleChange}
@@ -173,7 +173,7 @@ const Signup = ({ onSwitchToLogin, disabled = false }) => {
 
         <div className="relative">
           <label
-            htmlFor='email'
+            htmlFor='signup-email'
             className={`absolute left-3 transition-all duration-300 ease-out pointer-events-none z-10 ${
               isFocused.email || formData.email
                 ? '-top-3 text-xs px-2 scale-95'
@@ -190,12 +190,12 @@ const Signup = ({ onSwitchToLogin, disabled = false }) => {
           </label>
           <input
             type='email'
-            id='email'
+            id='signup-email'
             name='email'
             value={formData.email}
             onChange={handleChange}
             onFocus={() => handleFocus('email')}
-            onBlur={() => handleBlur('email')}
+            onBlur={() => handleBlur('email'))
             className='w-full px-4 py-2.5 rounded-lg transition-all duration-200 focus:outline-none'
             style={{ 
               backgroundColor: 'var(--input)',
@@ -211,7 +211,7 @@ const Signup = ({ onSwitchToLogin, disabled = false }) => {
 
         <div className="relative">
           <label
-            htmlFor='password'
+            htmlFor='signup-password'
             className={`absolute left-3 transition-all duration-300 ease-out pointer-events-none z-10 ${
               isFocused.password || formData.password
                 ? '-top-3 text-xs px-2 scale-95'
@@ -228,7 +228,7 @@ const Signup = ({ onSwitchToLogin, disabled = false }) => {
           </label>
           <input
             type='password'
-            id='password'
+            id='signup-password'
             name='password'
             value={formData.password}
             onChange={handleChange}
@@ -249,7 +249,7 @@ const Signup = ({ onSwitchToLogin, disabled = false }) => {
 
         <div className="relative">
           <label
-            htmlFor='confirmPassword'
+            htmlFor='signup-confirmPassword'
             className={`absolute left-3 transition-all duration-300 ease-out pointer-events-none z-10 ${
               isFocused.confirmPassword || formData.confirmPassword
                 ? '-top-3 text-xs px-2 scale-95'
@@ -266,12 +266,12 @@ const Signup = ({ onSwitchToLogin, disabled = false }) => {
           </label>
           <input
             type='password'
-            id='confirmPassword'
+            id='signup-confirmPassword'
             name='confirmPassword'
             value={formData.confirmPassword}
             onChange={handleChange}
             onFocus={() => handleFocus('confirmPassword')}
-            onBlur={() => handleBlur('confirmPassword')}
+            onBlur={() => handleBlur('confirmPassword'))
             className='w-full px-4 py-2.5 rounded-lg transition-all duration-200 focus:outline-none'
             style={{ 
               backgroundColor: 'var(--input)',
