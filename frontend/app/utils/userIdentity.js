@@ -53,12 +53,28 @@ const getCookie = (name) => {
 };
 
 /**
- * Delete a cookie
+ * Delete a cookie with all possible attribute combinations
  * @param {string} name - Cookie name
  */
 const deleteCookie = (name) => {
   if (typeof document === 'undefined') return; // SSR safety
+  
+  // Try multiple deletion strategies to ensure cookie is cleared
+  // Strategy 1: Basic deletion
   document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;`;
+  
+  // Strategy 2: With SameSite=Lax
+  document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;SameSite=Lax;`;
+  
+  // Strategy 3: With SameSite=None and Secure (for production)
+  document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;SameSite=None;Secure;`;
+  
+  // Strategy 4: With domain
+  if (typeof window !== 'undefined') {
+    const domain = window.location.hostname;
+    document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;domain=${domain};`;
+    document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;domain=${domain};SameSite=None;Secure;`;
+  }
 };
 
 /**
@@ -135,4 +151,33 @@ export const getCacheKeyPrefix = (user = null) => {
  */
 export const hasUserIdentity = () => {
   return getCookie(USER_ID_COOKIE) !== null;
+};
+
+/**
+ * Set logout flag to prevent automatic re-authentication
+ */
+export const setLogoutFlag = () => {
+  if (typeof window !== 'undefined') {
+    sessionStorage.setItem('user_logged_out', 'true');
+  }
+};
+
+/**
+ * Check if user explicitly logged out
+ * @returns {boolean}
+ */
+export const isLoggedOut = () => {
+  if (typeof window !== 'undefined') {
+    return sessionStorage.getItem('user_logged_out') === 'true';
+  }
+  return false;
+};
+
+/**
+ * Clear logout flag (when user logs in)
+ */
+export const clearLogoutFlag = () => {
+  if (typeof window !== 'undefined') {
+    sessionStorage.removeItem('user_logged_out');
+  }
 };
