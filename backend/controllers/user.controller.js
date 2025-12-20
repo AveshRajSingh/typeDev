@@ -56,7 +56,8 @@ const createUser = async (req, res) => {
       );
     } catch (error) {
       console.error("Failed to send OTP email:", error.message);
-      message = "Failed to send OTP email. Please try again later. or request a new OTP.";
+      message =
+        "Failed to send OTP email. Please try again later. or request a new OTP.";
     }
 
     const userToBeSent = await User.findById(user._id).select(
@@ -73,7 +74,6 @@ const createUser = async (req, res) => {
       .json({ message: "Server error", error: error.message });
   }
 };
-
 
 const verifyOtp = async (req, res) => {
   try {
@@ -111,7 +111,6 @@ const verifyOtp = async (req, res) => {
   }
 };
 
-
 const resendOtp = async (req, res) => {
   try {
     const { username } = req.body;
@@ -142,7 +141,10 @@ const resendOtp = async (req, res) => {
       {
         userId: user._id,
         resendCount: { $lt: MAX_RESEND },
-        $or: [{ lastSentAt: { $lte: dateThreshold } }, { lastSentAt: { $exists: false } }],
+        $or: [
+          { lastSentAt: { $lte: dateThreshold } },
+          { lastSentAt: { $exists: false } },
+        ],
       },
       {
         $inc: { resendCount: 1 },
@@ -202,52 +204,58 @@ const resendOtp = async (req, res) => {
     }
 
     // Otherwise it's a cooldown issue — compute remaining time
-    const nextAllowed = new Date(existing.lastSentAt.getTime() + RESEND_COOLDOWN_MS);
+    const nextAllowed = new Date(
+      existing.lastSentAt.getTime() + RESEND_COOLDOWN_MS
+    );
     const waitSeconds = Math.ceil((nextAllowed - Date.now()) / 1000);
     return res
       .status(429)
-      .json({ message: `Please wait ${waitSeconds} seconds before requesting a new OTP.` });
+      .json({
+        message: `Please wait ${waitSeconds} seconds before requesting a new OTP.`,
+      });
   } catch (error) {
     console.error("resendOtp error:", error);
-    return res.status(500).json({ message: "Server error", error: error.message });
+    return res
+      .status(500)
+      .json({ message: "Server error", error: error.message });
   }
 };
 
 const loginUser = async (req, res) => {
   try {
-    const { identifier, password } = req.body; 
+    const { identifier, password } = req.body;
 
     // Validate required fields
     if (!identifier || !password) {
-      return res.status(400).json({ 
-        message: "Email/Username and password are required" 
+      return res.status(400).json({
+        message: "Email/Username and password are required",
       });
     }
 
     // Find user by either email or username
     const user = await User.findOne({
-      $or: [{ email: identifier }, { username: identifier }]
+      $or: [{ email: identifier }, { username: identifier }],
     });
 
     if (!user) {
-      return res.status(404).json({ 
-        message: "User not found. Please check your credentials." 
+      return res.status(404).json({
+        message: "User not found. Please check your credentials.",
       });
     }
 
     // Check if email is verified
     if (!user.isEmailVerified) {
-      return res.status(403).json({ 
-        message: "Please verify your email before logging in." 
+      return res.status(403).json({
+        message: "Please verify your email before logging in.",
       });
     }
 
     // Verify password
     const isPasswordValid = await user.isPasswordCorrect(password);
-    
+
     if (!isPasswordValid) {
-      return res.status(401).json({ 
-        message: "Invalid credentials" 
+      return res.status(401).json({
+        message: "Invalid credentials",
       });
     }
 
@@ -262,8 +270,8 @@ const loginUser = async (req, res) => {
     // Cookie options
     const cookieOptions = {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production', // true in production
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // 'none' for cross-origin in production
+      secure: process.env.NODE_ENV === "production", // true in production
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // 'none' for cross-origin in production
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     };
 
@@ -275,22 +283,21 @@ const loginUser = async (req, res) => {
     // Set cookies and send response
     return res
       .status(200)
-      .cookie('accessToken', accessToken, {
+      .cookie("accessToken", accessToken, {
         ...cookieOptions,
         maxAge: 15 * 60 * 1000, // 15 minutes for access token
       })
-      .cookie('refreshToken', refreshToken, cookieOptions)
+      .cookie("refreshToken", refreshToken, cookieOptions)
       .json({
         message: "Login successful",
         user: userToBeSent,
         accessToken, // Also send in response for clients that prefer token storage
       });
-
   } catch (error) {
     console.error("loginUser error:", error);
-    return res.status(500).json({ 
-      message: "Server error", 
-      error: error.message 
+    return res.status(500).json({
+      message: "Server error",
+      error: error.message,
     });
   }
 };
@@ -304,9 +311,9 @@ const getCurrentUser = async (req, res) => {
     });
   } catch (error) {
     console.error("getCurrentUser error:", error);
-    return res.status(500).json({ 
-      message: "Server error", 
-      error: error.message 
+    return res.status(500).json({
+      message: "Server error",
+      error: error.message,
     });
   }
 };
@@ -316,8 +323,8 @@ const getUserProfile = async (req, res) => {
     const { username } = req.params;
 
     if (!username) {
-      return res.status(400).json({ 
-        message: "Username is required" 
+      return res.status(400).json({
+        message: "Username is required",
       });
     }
 
@@ -327,16 +334,16 @@ const getUserProfile = async (req, res) => {
     );
 
     if (!user) {
-      return res.status(404).json({ 
-        message: "User not found" 
+      return res.status(404).json({
+        message: "User not found",
       });
     }
 
     // Set cache headers for profile data
     res.set({
-      'Cache-Control': 'private, max-age=300', // Cache for 5 minutes
-      'ETag': `"profile-${username}-${user.updatedAt.getTime()}"`,
-      'Vary': 'Cookie',
+      "Cache-Control": "private, max-age=300", // Cache for 5 minutes
+      ETag: `"profile-${username}-${user.updatedAt.getTime()}"`,
+      Vary: "Cookie",
     });
 
     // Return user profile with statistics
@@ -349,7 +356,7 @@ const getUserProfile = async (req, res) => {
       bestWPM: user.bestWPM,
       avgAccuracy: user.avgAccuracy,
       bestAccuracy: user.bestAccuracy || 0,
-      testsCompleted: user.testsCompleted, 
+      testsCompleted: user.testsCompleted,
       isPremium: user.isPremium,
       isEmailVerified: user.isEmailVerified,
       freeFeedbackLeft: user.freeFeedbackLeft,
@@ -357,9 +364,9 @@ const getUserProfile = async (req, res) => {
     });
   } catch (error) {
     console.error("getUserProfile error:", error);
-    return res.status(500).json({ 
-      message: "Server error", 
-      error: error.message 
+    return res.status(500).json({
+      message: "Server error",
+      error: error.message,
     });
   }
 };
@@ -376,8 +383,8 @@ const incrementTestsTaken = async (req, res) => {
     );
 
     if (!user) {
-      return res.status(404).json({ 
-        message: "User not found" 
+      return res.status(404).json({
+        message: "User not found",
       });
     }
 
@@ -387,9 +394,9 @@ const incrementTestsTaken = async (req, res) => {
     });
   } catch (error) {
     console.error("incrementTestsTaken error:", error);
-    return res.status(500).json({ 
-      message: "Server error", 
-      error: error.message 
+    return res.status(500).json({
+      message: "Server error",
+      error: error.message,
     });
   }
 };
@@ -449,7 +456,6 @@ const saveTestResult = async (req, res) => {
   }
 };
 
-
 const logoutUser = async (req, res) => {
   try {
     const userId = req.user?._id;
@@ -462,26 +468,35 @@ const logoutUser = async (req, res) => {
     // Cookie options for clearing
     const cookieOptions = {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
     };
 
     // Clear cookies and send response
     return res
       .status(200)
-      .clearCookie('accessToken', cookieOptions)
-      .clearCookie('refreshToken', cookieOptions)
+      .clearCookie("accessToken", cookieOptions)
+      .clearCookie("refreshToken", cookieOptions)
       .json({
         message: "Logged out successfully",
       });
-
   } catch (error) {
     console.error("logoutUser error:", error);
-    return res.status(500).json({ 
-      message: "Server error", 
-      error: error.message 
+    return res.status(500).json({
+      message: "Server error",
+      error: error.message,
     });
   }
 };
 
-export { createUser, verifyOtp, resendOtp, loginUser, logoutUser, getCurrentUser, getUserProfile, incrementTestsTaken, saveTestResult };
+export {
+  createUser,
+  verifyOtp,
+  resendOtp,
+  loginUser,
+  logoutUser,
+  getCurrentUser,
+  getUserProfile,
+  incrementTestsTaken,
+  saveTestResult,
+};

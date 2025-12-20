@@ -106,6 +106,15 @@ export const clearUserId = () => {
 };
 
 /**
+ * Clear all authentication cookies (logout cleanup)
+ */
+export const clearAllAuthCookies = () => {
+  deleteCookie(USER_ID_COOKIE);
+  deleteCookie('accessToken');
+  deleteCookie('refreshToken');
+};
+
+/**
  * Get cache key prefix for current user
  * @param {Object|null} user - Authenticated user object (optional)
  * @returns {string} - Cache key prefix

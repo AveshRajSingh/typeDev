@@ -73,6 +73,9 @@ export const UserProvider = ({ children }) => {
   }
 
   const logout = async () => {
+    // Capture user info before clearing (needed for cache clearing)
+    const currentUser = user
+    
     try {
       // Call backend logout endpoint to clear cookies
       const { logoutUser } = await import('../services/api')
@@ -82,20 +85,31 @@ export const UserProvider = ({ children }) => {
       // Continue with local cleanup even if backend fails
     }
     
-    // Clear user state
-    setUser(null)
-    setError(null)
+    // Clear user's cache BEFORE clearing user state (cache needs user info)
+    if (currentUser) {
+      try {
+        const cleared = await clearUserCache(currentUser)
+        console.log(`🗑️ Cleared ${cleared} cache entries for user on logout`)
+      } catch (error) {
+        console.error('Failed to clear cache on logout:', error)
+      }
+    }
     
     // Clear user identity cookie
     clearUserId()
     
-    // Clear user's cache
-    try {
-      await clearUserCache(user)
-      console.log('🗑️ Cleared user cache on logout')
-    } catch (error) {
-      console.error('Failed to clear cache on logout:', error)
+    // Clear authentication cookies (in case backend failed)
+    if (typeof document !== 'undefined') {
+      // Clear accessToken cookie
+      document.cookie = 'accessToken=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;'
+      // Clear refreshToken cookie
+      document.cookie = 'refreshToken=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;'
+      console.log('🍪 Cleared authentication cookies')
     }
+    
+    // Clear user state
+    setUser(null)
+    setError(null)
     
     // Reload the page to ensure all state is cleared
     // This prevents race conditions with automatic user fetching

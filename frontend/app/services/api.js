@@ -222,8 +222,10 @@ const resendOtp = async (username) => {
 const logoutUser = async () => {
   try {
     const response = await api.post('/users/logout');
-    // Invalidate user cache
+    // Invalidate all user-related cache entries
     await invalidateCache('current_user');
+    await invalidateCache('profile_');
+    console.log('🗑️ Invalidated user cache entries');
     return response.data;
   } catch (error) {
     const errorMessage = error.response?.data?.message || "Logout failed";
