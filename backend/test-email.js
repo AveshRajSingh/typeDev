@@ -28,7 +28,8 @@ const testEmail = async () => {
   }
   
   console.log("\n📤 Step 2: Sending Test Email...");
-  const testRecipient = process.env.EMAIL_USER; // Send to yourself
+  // For Resend, use ADMIN_EMAIL or a valid test email
+  const testRecipient = process.env.ADMIN_EMAIL || "test@example.com";
   
   try {
     await sendMail(
