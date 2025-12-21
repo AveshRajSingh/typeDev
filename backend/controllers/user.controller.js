@@ -101,12 +101,50 @@ const verifyOtp = async (req, res) => {
           .json({ message: "Invalid OTP. Please try again." });
       }
     }
+    
+    // Verify email and set free feedback quota
     user.isEmailVerified = true;
     user.freeFeedbackLeft = 20; // Logged-in users get 20 free feedbacks
+    
+    // Generate tokens for auto-login
+    const accessToken = generateAccessToken(user);
+    const refreshToken = generateRefreshToken(user);
+    
+    // Update refresh token in database
+    user.refreshToken = refreshToken;
     await user.save();
+    
+    // Delete OTP records
     await Otp.deleteMany({ userId: user._id });
-    res.status(200).json({ message: "Email verified successfully." });
+    
+    // Cookie options
+    const cookieOptions = {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    };
+    
+    // Get user without sensitive data
+    const userToBeSent = await User.findById(user._id).select(
+      "-password -refreshToken"
+    );
+    
+    // Set cookies and send response with tokens
+    return res
+      .status(200)
+      .cookie("accessToken", accessToken, {
+        ...cookieOptions,
+        maxAge: 15 * 60 * 1000, // 15 minutes for access token
+      })
+      .cookie("refreshToken", refreshToken, cookieOptions)
+      .json({
+        message: "Email verified successfully. You are now logged in!",
+        user: userToBeSent,
+        accessToken,
+      });
   } catch (error) {
+    console.error("verifyOtp error:", error);
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };

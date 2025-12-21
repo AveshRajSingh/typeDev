@@ -9,8 +9,7 @@ const getCharacterStyle = (index, currentIndex, typedText, fullText) => {
     }
   } else if (index === currentIndex) {
     return {
-      backgroundColor: "var(--primary)",
-      color: "#ffffff",
+      position: 'relative',
     };
   } else {
     return { color: "var(--secondary)", opacity: 0.6 };
@@ -59,10 +58,36 @@ const TypingArea = ({
           fullText.split("").map((char, index) => (
             <span
               key={index}
-              className="transition-all duration-100"
-              style={getCharacterStyle(index, currentIndex, typedText, fullText)}
+              style={{
+                ...getCharacterStyle(index, currentIndex, typedText, fullText),
+                transition: 'color 0.15s ease',
+              }}
             >
               {char}
+              {index === currentIndex && (
+                <span
+                  className="absolute inset-0 pointer-events-none"
+                  style={{
+                    backgroundColor: 'var(--primary)',
+                    opacity: 0.15,
+                    animation: 'cursorPulse 1s ease-in-out infinite',
+                    borderRadius: '2px',
+                    transition: 'opacity 0.15s ease',
+                  }}
+                />
+              )}
+              {index === currentIndex && (
+                <span
+                  className="absolute left-0 top-0 bottom-0 pointer-events-none"
+                  style={{
+                    width: '3px',
+                    backgroundColor: 'var(--primary)',
+                    animation: 'cursorBlink 1s step-end infinite',
+                    borderRadius: '2px',
+                    transition: 'all 0.15s ease',
+                  }}
+                />
+              )}
             </span>
           ))
         ) : (

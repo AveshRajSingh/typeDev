@@ -179,15 +179,26 @@ const getCurrentUser = async () => {
 
 const signupUser = async (username, email, password) => {
   try {
+    console.log('📡 API: Making signup request to:', `${BASE_URL}/users/create-user`)
+    console.log('📦 Payload:', { username, email, passwordLength: password?.length })
+    
     const response = await api.post('/users/create-user', {
       username,
       email,
       password,
     });
+    
+    console.log('✅ API: Signup response:', response.data)
     return response.data;
   } catch (error) {
-    const errorMessage = error.response?.data?.message || "Signup failed";
-    console.error("API: Signup error:", errorMessage, error.response?.data);
+    console.error('❌ API: Signup request failed')
+    console.error('Error object:', error)
+    console.error('Response:', error.response)
+    console.error('Request:', error.request)
+    console.error('Config:', error.config)
+    
+    const errorMessage = error.response?.data?.message || error.message || "Signup failed. Please check your connection.";
+    console.error("API: Signup error message:", errorMessage);
     throw new Error(errorMessage);
   }
 };

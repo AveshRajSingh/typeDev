@@ -69,6 +69,26 @@ body {
   }
 }
 
+@keyframes cursorBlink {
+  0%, 49% {
+    opacity: 1;
+  }
+  50%, 100% {
+    opacity: 0;
+  }
+}
+
+@keyframes cursorPulse {
+  0%, 100% {
+    opacity: 0.15;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.2;
+    transform: scale(1.01);
+  }
+}
+
 .animate-fadeIn {
   animation: fadeIn 0.4s ease-out;
 }

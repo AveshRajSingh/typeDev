@@ -1,8 +1,11 @@
 'use client'
 import React, { useState } from 'react'
 import { signupUser, verifyOtp, resendOtp } from '../../services/api'
+import { useUser } from '../../context/UserContext'
+import { setUserId, clearLogoutFlag } from '../../utils/userIdentity'
 
 const Signup = ({ onSwitchToLogin, disabled = false }) => {
+  const { updateUser, fetchCurrentUser } = useUser()
   const [formData, setFormData] = useState({
     username: '',
     email: '',
@@ -42,28 +45,45 @@ const Signup = ({ onSwitchToLogin, disabled = false }) => {
     e.preventDefault()
     setError('')
 
-    console.log('Signup form submitted with:', formData)
+    console.log('🚀 Signup form submitted')
+    console.log('📝 Form data:', {
+      username: formData.username,
+      email: formData.email,
+      hasPassword: !!formData.password,
+      hasConfirmPassword: !!formData.confirmPassword
+    })
+
+    // Validation
+    if (!formData.username || !formData.email || !formData.password || !formData.confirmPassword) {
+      setError('All fields are required!')
+      return
+    }
 
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match!')
       return
     }
 
+    if (formData.password.length < 6) {
+      setError('Password must be at least 6 characters long!')
+      return
+    }
+
     setLoading(true)
     try {
-      console.log('Calling signupUser API with:', {
-        username: formData.username,
-        email: formData.email,
-        password: '***' // Don't log actual password
-      })
-      
+      console.log('🔄 Calling signupUser API...')
       const response = await signupUser(formData.username, formData.email, formData.password)
-      console.log('Signup successful:', response)
+      console.log('✅ Signup successful:', response)
       setOtpSent(true)
       setError('')
     } catch (error) {
-      console.error('Signup error:', error)
-      setError(error.message || 'Signup failed. Please try again.')
+      console.error('❌ Signup error:', error)
+      console.error('Error details:', {
+        message: error.message,
+        response: error.response,
+        stack: error.stack
+      })
+      setError(error.message || 'Signup failed. Please check your internet connection and try again.')
     } finally {
       setLoading(false)
     }
@@ -76,15 +96,37 @@ const Signup = ({ onSwitchToLogin, disabled = false }) => {
 
     try {
       const response = await verifyOtp(formData.username, otp)
-      console.log('OTP verified:', response)
-      setError('')
-      // Optionally redirect or show success message
-      alert('Account verified successfully! Please login.')
-      if (onSwitchToLogin) {
-        onSwitchToLogin()
+      console.log('✅ OTP verified successfully:', response)
+      
+      // If verification returns user data, auto-login is successful
+      if (response.user) {
+        console.log('🔐 Auto-login successful, updating user context...')
+        
+        // Update context with user data
+        updateUser(response.user)
+        
+        // Set user ID for cache management
+        if (response.user._id) {
+          setUserId(`auth_${response.user._id}`)
+        }
+        clearLogoutFlag()
+        
+        // Fetch fresh user data to ensure everything is synced
+        await fetchCurrentUser()
+        
+        console.log('🎉 User logged in successfully, redirecting to home...')
+        
+        // Navigate to home page
+        window.location.href = '/'
+      } else {
+        // Fallback to old behavior if response doesn't include user
+        alert('Account verified successfully! Please login.')
+        if (onSwitchToLogin) {
+          onSwitchToLogin()
+        }
       }
     } catch (error) {
-      console.error('OTP verification error:', error)
+      console.error('❌ OTP verification error:', error)
       setError(error.message || 'Invalid OTP. Please try again.')
     } finally {
       setLoading(false)
@@ -287,15 +329,20 @@ const Signup = ({ onSwitchToLogin, disabled = false }) => {
 
         <button
           type='submit'
-          disabled={loading || disabled}
+          disabled={loading}
           className='w-full py-2.5 px-4 rounded-lg font-semibold transition-all duration-200 hover:brightness-90 active:brightness-75 disabled:opacity-50 disabled:cursor-not-allowed'
           style={{ 
             backgroundColor: 'var(--primary)',
             color: '#ffffff'
           }}
         >
-          {loading ? 'Creating Account...' : disabled ? 'Offline - Sign Up Disabled' : 'Create Account'}
+          {loading ? 'Creating Account...' : 'Create Account'}
         </button>
+        {disabled && (
+          <p className='text-xs text-center mt-2' style={{ color: 'var(--secondary)' }}>
+            ⚠️ You appear to be offline. Signup may not work.
+          </p>
+        )}
       </form>
       ) : (
         <form onSubmit={handleVerifyOtp} className='space-y-3'>
@@ -340,20 +387,20 @@ const Signup = ({ onSwitchToLogin, disabled = false }) => {
 
           <button
             type='submit'
-            disabled={loading || disabled}
+            disabled={loading}
             className='w-full py-2.5 px-4 rounded-lg font-semibold transition-all duration-200 hover:brightness-90 active:brightness-75 disabled:opacity-50 disabled:cursor-not-allowed'
             style={{ 
               backgroundColor: 'var(--primary)',
               color: '#ffffff'
             }}
           >
-            {loading ? 'Verifying...' : disabled ? 'Offline - Verify Disabled' : 'Verify OTP'}
+            {loading ? 'Verifying...' : 'Verify OTP'}
           </button>
 
           <button
             type='button'
             onClick={handleResendOtp}
-            disabled={resendLoading || disabled}
+            disabled={resendLoading}
             className='w-full py-2 px-4 rounded-lg font-medium transition-all duration-200 hover:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed'
             style={{ 
               backgroundColor: 'transparent',
@@ -361,7 +408,7 @@ const Signup = ({ onSwitchToLogin, disabled = false }) => {
               border: '1px solid var(--primary)'
             }}
           >
-            {resendLoading ? 'Resending...' : disabled ? 'Offline - Resend Disabled' : 'Resend OTP'}
+            {resendLoading ? 'Resending...' : 'Resend OTP'}
           </button>
         </form>
       )}

@@ -229,11 +229,12 @@ export const generateParagraph = async (req, res) => {
     const targetDifficulty = difficulty || 'medium';
     
     let prompt;
+    let weakCharacters = null; // Initialize outside the if block
     const hasErrors = errorFrequencyMap && Object.keys(errorFrequencyMap).length > 0;
     
     if (hasErrors) {
       // Generate targeted paragraph focusing on weak characters
-      const weakCharacters = Object.entries(errorFrequencyMap)
+      weakCharacters = Object.entries(errorFrequencyMap)
         .sort((a, b) => b[1] - a[1])
         .slice(0, 8)
         .map(([char, count]) => char)
