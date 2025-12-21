@@ -4,7 +4,7 @@ import { signupUser, verifyOtp, resendOtp } from '../../services/api'
 import { useUser } from '../../context/UserContext'
 import { setUserId, clearLogoutFlag } from '../../utils/userIdentity'
 
-const Signup = ({ onSwitchToLogin, disabled = false }) => {
+const Signup = ({ onSwitchToLogin }) => {
   const { updateUser, fetchCurrentUser } = useUser()
   const [formData, setFormData] = useState({
     username: '',
@@ -338,11 +338,6 @@ const Signup = ({ onSwitchToLogin, disabled = false }) => {
         >
           {loading ? 'Creating Account...' : 'Create Account'}
         </button>
-        {disabled && (
-          <p className='text-xs text-center mt-2' style={{ color: 'var(--secondary)' }}>
-            ⚠️ You appear to be offline. Signup may not work.
-          </p>
-        )}
       </form>
       ) : (
         <form onSubmit={handleVerifyOtp} className='space-y-3'>
@@ -412,48 +407,6 @@ const Signup = ({ onSwitchToLogin, disabled = false }) => {
           </button>
         </form>
       )}
-
-      <div className='relative my-4'>
-        <div
-          className='absolute inset-0 flex items-center'
-          style={{ borderTop: '1px solid var(--border)' }}
-        ></div>
-        <div className='relative flex justify-center text-xs uppercase'>
-          <span
-            className='px-2'
-            style={{ backgroundColor: 'var(--card)', color: 'var(--secondary)' }}
-          >
-            Or
-          </span>
-        </div>
-      </div>
-
-      <div className='text-center'>
-        <p style={{ color: 'var(--foreground)' }} className='text-sm'>
-          Already have an account?{' '}
-          <button
-            onClick={onSwitchToLogin}
-            className='font-semibold transition-all duration-200 hover:underline inline-flex items-center gap-1 group'
-            style={{ color: 'var(--primary)' }}
-          >
-            Sign In
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={2}
-              stroke="currentColor"
-              className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"
-              />
-            </svg>
-          </button>
-        </p>
-      </div>
     </div>
   )
 }

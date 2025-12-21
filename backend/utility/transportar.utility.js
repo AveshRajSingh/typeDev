@@ -19,6 +19,20 @@ const transporter = nodemailer.createTransport({
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS,
     },
+    // Add timeout and connection settings for better reliability
+    connectionTimeout: 10000, // 10 seconds
+    greetingTimeout: 5000, // 5 seconds
+    socketTimeout: 10000, // 10 seconds
+    // For port 587, require STARTTLS
+    requireTLS: emailPort === 587,
+    tls: {
+        // Do not fail on invalid certs (use with caution in production)
+        rejectUnauthorized: process.env.NODE_ENV === 'production',
+        minVersion: 'TLSv1.2'
+    },
+    // Enable debug output
+    debug: process.env.NODE_ENV !== 'production',
+    logger: process.env.NODE_ENV !== 'production'
 });
 const sendMail = async (to, subject, text) => {
     // Input validation
@@ -33,20 +47,55 @@ const sendMail = async (to, subject, text) => {
     }
 
     const mailOptions = {
-        from: `"No Reply" <${process.env.EMAIL_USER}>`,
+        from: `"TypeDev" <${process.env.EMAIL_USER}>`,
         to,
         subject,
         text,
     };
 
     try {
-        await transporter.sendMail(mailOptions);
-        return { success: true, message: 'Email sent successfully' };
+        console.log(`📧 Attempting to send email to: ${to}`);
+        const info = await transporter.sendMail(mailOptions);
+        console.log(`✅ Email sent successfully to ${to}. MessageId: ${info.messageId}`);
+        return { success: true, message: 'Email sent successfully', messageId: info.messageId };
     } catch (err) {
-      console.error('Error sending email', { to, subject, error: err });
-        // Rethrow so callers can handle failures (keeps function async)
-        return { success: false, message: err.message };
+        console.error('❌ Error sending email:', { 
+            to, 
+            subject, 
+            error: err.message,
+            code: err.code,
+            command: err.command
+        });
+        
+        // Provide more specific error messages
+        if (err.code === 'ETIMEDOUT' || err.code === 'ESOCKET') {
+            throw new Error('Email service temporarily unavailable. Please try again later.');
+        } else if (err.code === 'EAUTH') {
+            throw new Error('Email authentication failed. Please contact support.');
+        } else if (err.responseCode === 550) {
+            throw new Error('Invalid email address.');
+        }
+        
+        // Throw original error for other cases
+        throw err;
     }
 }
 
-export { transporter, sendMail };
+// Verify SMTP connection on startup
+const verifyConnection = async () => {
+    try {
+        console.log('🔍 Verifying SMTP connection...');
+        await transporter.verify();
+        console.log('✅ SMTP connection verified successfully');
+        return true;
+    } catch (error) {
+        console.error('❌ SMTP connection verification failed:', error.message);
+        console.error('⚠️  Email functionality may not work properly');
+        return false;
+    }
+};
+
+// Verify connection when module loads (non-blocking)
+verifyConnection();
+
+export { transporter, sendMail, verifyConnection };

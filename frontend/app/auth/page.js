@@ -96,7 +96,6 @@ export default function AuthPage() {
         >
           <Signup 
             onSwitchToLogin={handleSwitchToLogin}
-            disabled={offline}
           />
         </div>
       </div>

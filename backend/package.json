@@ -30,6 +30,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon app.js",
     "start": "node app.js",
+    "test-email": "node test-email.js",
     "cleanup-orders": "node scripts/cleanup-orders.js",
     "check-orders": "node scripts/check-orders.js"
   },
